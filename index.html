@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DukaPOS Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #2563EB;
+      --blue-d:  #1E40AF;
+      --blue-l:  #EFF6FF;
+      --green:   #10B981;
+      --amber:   #F59E0B;
+      --red:     #EF4444;
+      --purple:  #8B5CF6;
+      --bg:      #F1F5F9;
+      --surface: #FFFFFF;
+      --border:  #E2E8F0;
+      --text:    #0F172A;
+      --muted:   #64748B;
+      --radius:  12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, var(--blue), var(--blue-d));
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.15);
+    }
+    .header-brand { display: flex; align-items: center; gap: 12px; }
+    .header-logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800;
+    }
+    .header-title { font-size: 20px; font-weight: 700; }
+    .header-sub   { font-size: 12px; opacity: .75; margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    #refresh-btn {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    #refresh-btn:hover { background: rgba(255,255,255,.25); }
+    #last-updated { font-size: 11px; opacity: .65; }
+
+    /* ── Main ── */
+    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      border-left: 4px solid var(--blue);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card .icon {
+      font-size: 22px;
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 4px;
+    }
+    .stat-card .label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .stat-card .value { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; }
+    .stat-card .sub   { font-size: 11px; color: var(--muted); }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .toolbar input, .toolbar select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); }
+    .toolbar input { width: 220px; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #F8FAFC; }
+    th {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 11px 14px;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #F8FAFC; }
+
+    /* badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-android { background: #DCFCE7; color: #166534; }
+    .badge-ios     { background: #F3E8FF; color: #6B21A8; }
+    .badge-physical { background: #DBEAFE; color: #1E40AF; }
+    .badge-emu      { background: #FEF3C7; color: #92400E; }
+    .badge-active   { background: #DCFCE7; color: #166534; }
+    .badge-stale    { background: #FEE2E2; color: #991B1B; }
+
+    /* Device ID chip */
+    .device-chip {
+      font-family: monospace;
+      font-size: 11px;
+      background: #F1F5F9;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--muted);
+    }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pagination-btns { display: flex; gap: 6px; }
+    .page-btn {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      transition: all .1s;
+    }
+    .page-btn:hover:not(:disabled) { background: var(--blue-l); border-color: var(--blue); color: var(--blue); }
+    .page-btn:disabled { opacity: .4; cursor: default; }
+    .page-btn.active   { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    /* ── Empty / loading ── */
+    .state-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1E293B; color: #fff;
+      padding: 10px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      opacity: 0; transition: opacity .3s;
+      pointer-events: none; z-index: 999;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-logo">D</div>
+    <div>
+      <div class="header-title">DukaPOS Admin</div>
+      <div class="header-sub">Install tracking &amp; user registry</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="last-updated"></span>
+    <button id="refresh-btn" onclick="loadAll()">⟳ Refresh</button>
+  </div>
+</header>
+
+<main>
+  <!-- Stat cards -->
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat-card"><div class="icon" style="background:#EFF6FF">📱</div><div class="label">Total Installs</div><div class="value" id="s-total">—</div></div>
+    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">✅</div><div class="label">Active (7 days)</div><div class="value" id="s-7d">—</div></div>
+    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">🏪</div><div class="label">Unique Businesses</div><div class="value" id="s-biz">—</div></div>
+    <div class="stat-card" style="border-left-color:#8B5CF6"><div class="icon" style="background:#F3E8FF">🤖</div><div class="label">Android</div><div class="value" id="s-android">—</div></div>
+    <div class="stat-card" style="border-left-color:#6366F1"><div class="icon" style="background:#EEF2FF">🍎</div><div class="label">iOS</div><div class="value" id="s-ios">—</div></div>
+    <div class="stat-card" style="border-left-color:#EF4444"><div class="icon" style="background:#FEE2E2">📅</div><div class="label">Active (30 days)</div><div class="value" id="s-30d">—</div></div>
+  </div>
+
+  <!-- Users table -->
+  <div class="section-header">
+    <span class="section-title">Registered Devices</span>
+    <div class="toolbar">
+      <input id="search-input" type="text" placeholder="Search business, owner, location…" oninput="debounceSearch()" />
+      <select id="platform-filter" onchange="loadUsers(1)">
+        <option value="">All platforms</option>
+        <option value="android">Android</option>
+        <option value="ios">iOS</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Business</th>
+          <th>Owner</th>
+          <th>Location</th>
+          <th>Device</th>
+          <th>OS</th>
+          <th>App</th>
+          <th>Platform</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>First Seen</th>
+          <th>Last Seen</th>
+          <th>Opens</th>
+          <th>Device ID</th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        <tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      <span id="page-info">—</span>
+      <div class="pagination-btns" id="page-btns"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  // ── State ──
+  let currentPage = 1;
+  let totalPages  = 1;
+  let searchTimer = null;
+
+  // ── Helpers ──
+  function shortId(id) {
+    if (!id || id.length <= 14) return id ?? '—';
+    return id.slice(0, 8) + '…' + id.slice(-4);
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function isActive(lastSeen) {
+    if (!lastSeen) return false;
+    return (Date.now() - new Date(lastSeen).getTime()) < 7 * 24 * 60 * 60 * 1000;
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Load stats ──
+  async function loadStats() {
+    try {
+      const r = await fetch('/api/stats');
+      if (!r.ok) throw new Error(r.statusText);
+      const s = await r.json();
+      document.getElementById('s-total').textContent   = s.total_installs   ?? '0';
+      document.getElementById('s-7d').textContent      = s.active_7d        ?? '0';
+      document.getElementById('s-biz').textContent     = s.unique_businesses ?? '0';
+      document.getElementById('s-android').textContent = s.android           ?? '0';
+      document.getElementById('s-ios').textContent     = s.ios               ?? '0';
+      document.getElementById('s-30d').textContent     = s.active_30d        ?? '0';
+    } catch (e) {
+      toast('Failed to load stats');
+    }
+  }
+
+  // ── Load users ──
+  async function loadUsers(page = 1) {
+    currentPage = page;
+    const search   = document.getElementById('search-input').value.trim();
+    const platform = document.getElementById('platform-filter').value;
+
+    const params = new URLSearchParams({ page, limit: 50 });
+    if (search)   params.set('search', search);
+    if (platform) params.set('platform', platform);
+
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = `<tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr>`;
+
+    try {
+      const r = await fetch('/api/users?' + params);
+      if (!r.ok) throw new Error(r.statusText);
+      const res = await r.json();
+
+      totalPages = res.pages || 1;
+      renderTable(res.data, res.total, page, res.pages, res.limit);
+      renderPagination(res.total, page, res.pages);
+    } catch (e) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="14">⚠️ Failed to load users</td></tr>`;
+    }
+  }
+
+  function renderTable(rows, total, page, pages, limit) {
+    const tbody = document.getElementById('users-tbody');
+
+    document.getElementById('page-info').textContent =
+      rows.length === 0
+        ? 'No results'
+        : `Showing ${(page - 1) * limit + 1}–${(page - 1) * limit + rows.length} of ${total}`;
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="14">No records found</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((u, i) => {
+      const active  = isActive(u.last_seen_at);
+      const platBadge = u.platform === 'ios'
+        ? `<span class="badge badge-ios">iOS</span>`
+        : `<span class="badge badge-android">Android</span>`;
+      const typeBadge = u.is_physical
+        ? `<span class="badge badge-physical">Physical</span>`
+        : `<span class="badge badge-emu">Emulator</span>`;
+      const statusBadge = active
+        ? `<span class="badge badge-active">Active</span>`
+        : `<span class="badge badge-stale">Inactive</span>`;
+
+      return `
+        <tr>
+          <td style="color:var(--muted)">${(page - 1) * 50 + i + 1}</td>
+          <td><strong>${u.business_name || '<em style="color:var(--muted)">—</em>'}</strong></td>
+          <td>${u.owner_name || '—'}</td>
+          <td>${u.location || '—'}</td>
+          <td>${u.device_name || '—'}<br><span style="font-size:11px;color:var(--muted)">${u.device_model || ''}</span></td>
+          <td>${[u.os_name, u.os_version].filter(Boolean).join(' ') || '—'}</td>
+          <td>${u.app_version || '—'}</td>
+          <td>${platBadge}</td>
+          <td>${typeBadge}</td>
+          <td>${statusBadge}</td>
+          <td style="white-space:nowrap">${fmtDate(u.first_seen_at)}</td>
+          <td style="white-space:nowrap">${fmtDateTime(u.last_seen_at)}</td>
+          <td style="text-align:center"><strong>${u.heartbeat_count}</strong></td>
+          <td><span class="device-chip" title="${u.device_id}">${shortId(u.device_id)}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderPagination(total, page, pages) {
+    const container = document.getElementById('page-btns');
+    if (pages <= 1) { container.innerHTML = ''; return; }
+
+    let html = `<button class="page-btn" onclick="loadUsers(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹ Prev</button>`;
+
+    // Show at most 7 page buttons
+    const start = Math.max(1, page - 3);
+    const end   = Math.min(pages, start + 6);
+    for (let p = start; p <= end; p++) {
+      html += `<button class="page-btn ${p === page ? 'active' : ''}" onclick="loadUsers(${p})">${p}</button>`;
+    }
+
+    html += `<button class="page-btn" onclick="loadUsers(${page + 1})" ${page >= pages ? 'disabled' : ''}>Next ›</button>`;
+    container.innerHTML = html;
+  }
+
+  // ── Search debounce ──
+  function debounceSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadUsers(1), 350);
+  }
+
+  // ── Load all ──
+  async function loadAll() {
+    await Promise.all([loadStats(), loadUsers(currentPage)]);
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString();
+  }
+
+  // ── Init + auto-refresh every 60s ──
+  loadAll();
+  setInterval(loadAll, 60_000);
+</script>
+</body>
+</html>
