@@ -6,460 +6,377 @@
   <title>DukaPOS Admin</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --blue:    #2563EB;
-      --blue-d:  #1E40AF;
-      --blue-l:  #EFF6FF;
-      --green:   #10B981;
-      --amber:   #F59E0B;
-      --red:     #EF4444;
-      --purple:  #8B5CF6;
-      --bg:      #F1F5F9;
-      --surface: #FFFFFF;
-      --border:  #E2E8F0;
-      --text:    #0F172A;
-      --muted:   #64748B;
-      --radius:  12px;
+      --blue:#2563EB; --blue-d:#1E40AF; --blue-l:#EFF6FF;
+      --green:#10B981; --amber:#F59E0B; --red:#EF4444; --purple:#8B5CF6;
+      --bg:#F1F5F9; --surface:#FFFFFF; --border:#E2E8F0;
+      --text:#0F172A; --muted:#64748B; --radius:12px;
     }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    /* header */
+    header { background:linear-gradient(135deg,var(--blue),var(--blue-d)); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; color:#fff; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.15); }
+    .hbrand { display:flex; align-items:center; gap:12px; }
+    .hlogo  { width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; }
+    .htitle { font-size:18px; font-weight:700; }
+    .hsub   { font-size:11px; opacity:.7; margin-top:1px; }
+    .hright { display:flex; align-items:center; gap:10px; }
+    #refresh-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; }
+    #refresh-btn:hover { background:rgba(255,255,255,.25); }
+    #last-upd { font-size:11px; opacity:.6; }
 
-    /* ── Header ── */
-    header {
-      background: linear-gradient(135deg, var(--blue), var(--blue-d));
-      padding: 20px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,.15);
-    }
-    .header-brand { display: flex; align-items: center; gap: 12px; }
-    .header-logo {
-      width: 40px; height: 40px; border-radius: 10px;
-      background: rgba(255,255,255,.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; font-weight: 800;
-    }
-    .header-title { font-size: 20px; font-weight: 700; }
-    .header-sub   { font-size: 12px; opacity: .75; margin-top: 1px; }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    #refresh-btn {
-      background: rgba(255,255,255,.15);
-      border: 1px solid rgba(255,255,255,.25);
-      color: #fff;
-      padding: 7px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: background .15s;
-    }
-    #refresh-btn:hover { background: rgba(255,255,255,.25); }
-    #last-updated { font-size: 11px; opacity: .65; }
+    /* nav tabs */
+    .nav { display:flex; gap:4px; background:var(--surface); border-bottom:1px solid var(--border); padding:0 28px; }
+    .nav-tab { padding:12px 18px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; transition:all .15s; }
+    .nav-tab:hover { color:var(--text); }
+    .nav-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
 
-    /* ── Main ── */
-    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+    /* pages */
+    .page { display:none; max-width:1280px; margin:0 auto; padding:24px; }
+    .page.active { display:block; }
 
-    /* ── Stat cards ── */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      border-left: 4px solid var(--blue);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .stat-card .icon {
-      font-size: 22px;
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 4px;
-    }
-    .stat-card .label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-    .stat-card .value { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; }
-    .stat-card .sub   { font-size: 11px; color: var(--muted); }
+    /* stat grid */
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat-card { background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); border-left:4px solid var(--blue); }
+    .stat-card .icon { font-size:20px; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+    .stat-card .lbl  { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .stat-card .val  { font-size:26px; font-weight:800; color:var(--text); line-height:1.1; }
+    .stat-card .sub  { font-size:11px; color:var(--muted); margin-top:2px; }
 
-    /* ── Section header ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    /* toolbar */
+    .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+    .sec-title { font-size:14px; font-weight:700; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .toolbar input,.toolbar select { border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:13px; background:var(--surface); color:var(--text); outline:none; }
+    .toolbar input:focus,.toolbar select:focus { border-color:var(--blue); }
+    .toolbar input { width:200px; }
 
-    /* ── Toolbar ── */
-    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
-    .toolbar input, .toolbar select {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 13px;
-      background: var(--surface);
-      color: var(--text);
-      outline: none;
-    }
-    .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); }
-    .toolbar input { width: 220px; }
-
-    /* ── Table ── */
-    .table-wrap {
-      background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: #F8FAFC; }
-    th {
-      padding: 10px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-    td {
-      padding: 11px 14px;
-      font-size: 13px;
-      color: var(--text);
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: #F8FAFC; }
+    /* table */
+    .table-wrap { background:var(--surface); border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,.06); overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead { background:#F8FAFC; }
+    th { padding:9px 13px; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:10px 13px; font-size:12px; color:var(--text); border-bottom:1px solid var(--border); vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:#F8FAFC; }
 
     /* badges */
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-android { background: #DCFCE7; color: #166534; }
-    .badge-ios     { background: #F3E8FF; color: #6B21A8; }
-    .badge-physical { background: #DBEAFE; color: #1E40AF; }
-    .badge-emu      { background: #FEF3C7; color: #92400E; }
-    .badge-active   { background: #DCFCE7; color: #166534; }
-    .badge-stale    { background: #FEE2E2; color: #991B1B; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; }
+    .b-android { background:#DCFCE7; color:#166534; }
+    .b-ios     { background:#F3E8FF; color:#6B21A8; }
+    .b-active  { background:#DCFCE7; color:#166534; }
+    .b-expired { background:#FEE2E2; color:#991B1B; }
+    .b-suspended { background:#FEF3C7; color:#92400E; }
+    .b-none    { background:#F1F5F9; color:#64748B; }
+    .b-success { background:#DCFCE7; color:#166534; }
+    .b-pending { background:#FEF3C7; color:#92400E; }
+    .b-failed  { background:#FEE2E2; color:#991B1B; }
+    .b-daily   { background:#DBEAFE; color:#1E40AF; }
+    .b-weekly  { background:#EDE9FE; color:#5B21B6; }
+    .b-monthly { background:#D1FAE5; color:#065F46; }
+    .b-lifetime{ background:#FEF3C7; color:#92400E; }
 
-    /* Device ID chip */
-    .device-chip {
-      font-family: monospace;
-      font-size: 11px;
-      background: #F1F5F9;
-      border-radius: 4px;
-      padding: 2px 6px;
-      color: var(--muted);
-    }
+    /* action buttons */
+    .act-btn { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; border:none; }
+    .act-suspend  { background:#FEE2E2; color:#991B1B; }
+    .act-activate { background:#DCFCE7; color:#166534; }
+    .act-btn:hover { opacity:.8; }
 
-    /* ── Pagination ── */
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .pagination-btns { display: flex; gap: 6px; }
-    .page-btn {
-      padding: 5px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-      transition: all .1s;
-    }
-    .page-btn:hover:not(:disabled) { background: var(--blue-l); border-color: var(--blue); color: var(--blue); }
-    .page-btn:disabled { opacity: .4; cursor: default; }
-    .page-btn.active   { background: var(--blue); color: #fff; border-color: var(--blue); }
+    /* pagination */
+    .pagination { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
+    .pg-btns { display:flex; gap:4px; }
+    .pg-btn { padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); cursor:pointer; font-size:11px; font-weight:600; color:var(--text); }
+    .pg-btn:hover:not(:disabled) { background:var(--blue-l); border-color:var(--blue); color:var(--blue); }
+    .pg-btn:disabled { opacity:.4; cursor:default; }
+    .pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
 
-    /* ── Empty / loading ── */
-    .state-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 14px; }
-    .spinner {
-      display: inline-block; width: 18px; height: 18px;
-      border: 2px solid var(--border);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin-right: 8px; vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Toast ── */
-    #toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: #1E293B; color: #fff;
-      padding: 10px 18px; border-radius: 8px;
-      font-size: 13px; font-weight: 600;
-      opacity: 0; transition: opacity .3s;
-      pointer-events: none; z-index: 999;
-    }
-    #toast.show { opacity: 1; }
+    /* misc */
+    .chip { font-family:monospace; font-size:10px; background:#F1F5F9; border-radius:4px; padding:2px 5px; color:var(--muted); }
+    .state-row td { text-align:center; padding:40px; color:var(--muted); }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #toast { position:fixed; bottom:20px; right:20px; background:#1E293B; color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; font-weight:600; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; }
+    #toast.show { opacity:1; }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-brand">
-    <div class="header-logo">D</div>
-    <div>
-      <div class="header-title">DukaPOS Admin</div>
-      <div class="header-sub">Install tracking &amp; user registry</div>
-    </div>
+  <div class="hbrand">
+    <div class="hlogo">D</div>
+    <div><div class="htitle">DukaPOS Admin</div><div class="hsub">Installs · Payments · Licences</div></div>
   </div>
-  <div class="header-right">
-    <span id="last-updated"></span>
+  <div class="hright">
+    <span id="last-upd"></span>
     <button id="refresh-btn" onclick="loadAll()">⟳ Refresh</button>
   </div>
 </header>
 
-<main>
-  <!-- Stat cards -->
-  <div class="stat-grid" id="stat-grid">
-    <div class="stat-card"><div class="icon" style="background:#EFF6FF">📱</div><div class="label">Total Installs</div><div class="value" id="s-total">—</div></div>
-    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">✅</div><div class="label">Active (7 days)</div><div class="value" id="s-7d">—</div></div>
-    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">🏪</div><div class="label">Unique Businesses</div><div class="value" id="s-biz">—</div></div>
-    <div class="stat-card" style="border-left-color:#8B5CF6"><div class="icon" style="background:#F3E8FF">🤖</div><div class="label">Android</div><div class="value" id="s-android">—</div></div>
-    <div class="stat-card" style="border-left-color:#6366F1"><div class="icon" style="background:#EEF2FF">🍎</div><div class="label">iOS</div><div class="value" id="s-ios">—</div></div>
-    <div class="stat-card" style="border-left-color:#EF4444"><div class="icon" style="background:#FEE2E2">📅</div><div class="label">Active (30 days)</div><div class="value" id="s-30d">—</div></div>
-  </div>
+<!-- Nav -->
+<div class="nav">
+  <div class="nav-tab active" onclick="showTab('overview')">📊 Overview</div>
+  <div class="nav-tab" onclick="showTab('devices')">📱 Devices</div>
+  <div class="nav-tab" onclick="showTab('payments')">💳 Payments</div>
+  <div class="nav-tab" onclick="showTab('licences')">🔑 Licences</div>
+</div>
 
-  <!-- Users table -->
-  <div class="section-header">
-    <span class="section-title">Registered Devices</span>
+<!-- ── Overview ── -->
+<div id="tab-overview" class="page active">
+  <div class="stat-grid">
+    <div class="stat-card"><div class="icon" style="background:#EFF6FF">📱</div><div class="lbl">Total Installs</div><div class="val" id="s-total">—</div></div>
+    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">✅</div><div class="lbl">Active (7d)</div><div class="val" id="s-7d">—</div></div>
+    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">🏪</div><div class="lbl">Businesses</div><div class="val" id="s-biz">—</div></div>
+    <div class="stat-card" style="border-left-color:#8B5CF6"><div class="icon" style="background:#EDE9FE">🤖</div><div class="lbl">Android</div><div class="val" id="s-android">—</div></div>
+    <div class="stat-card" style="border-left-color:#6366F1"><div class="icon" style="background:#EEF2FF">🍎</div><div class="lbl">iOS</div><div class="val" id="s-ios">—</div></div>
+    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">🔑</div><div class="lbl">Active Licences</div><div class="val" id="s-lic-active">—</div></div>
+    <div class="stat-card" style="border-left-color:#EF4444"><div class="icon" style="background:#FEE2E2">⚠️</div><div class="lbl">Expired</div><div class="val" id="s-lic-exp">—</div></div>
+    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">💰</div><div class="lbl">Total Revenue</div><div class="val" id="s-revenue">—</div><div class="sub">KES</div></div>
+  </div>
+</div>
+
+<!-- ── Devices ── -->
+<div id="tab-devices" class="page">
+  <div class="sec-head">
+    <span class="sec-title">Registered Devices</span>
     <div class="toolbar">
-      <input id="search-input" type="text" placeholder="Search business, owner, location…" oninput="debounceSearch()" />
-      <select id="platform-filter" onchange="loadUsers(1)">
+      <input id="dev-search" type="text" placeholder="Search…" oninput="debounce('dev')" />
+      <select id="dev-platform" onchange="loadDevices(1)">
         <option value="">All platforms</option>
         <option value="android">Android</option>
         <option value="ios">iOS</option>
       </select>
+      <select id="dev-status" onchange="loadDevices(1)">
+        <option value="">Any licence</option>
+        <option value="active">Active</option>
+        <option value="expired">Expired</option>
+        <option value="suspended">Suspended</option>
+        <option value="none">No licence</option>
+      </select>
     </div>
   </div>
-
   <div class="table-wrap">
     <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Business</th>
-          <th>Owner</th>
-          <th>Location</th>
-          <th>Device</th>
-          <th>OS</th>
-          <th>App</th>
-          <th>Platform</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>First Seen</th>
-          <th>Last Seen</th>
-          <th>Opens</th>
-          <th>Device ID</th>
-        </tr>
-      </thead>
-      <tbody id="users-tbody">
-        <tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr>
-      </tbody>
+      <thead><tr>
+        <th>#</th><th>Business</th><th>Owner</th><th>Location</th>
+        <th>Device</th><th>OS</th><th>Platform</th>
+        <th>Licence</th><th>Plan</th><th>Expires</th>
+        <th>Last Seen</th><th>Opens</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="dev-tbody"><tr class="state-row"><td colspan="13"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
-
-    <div class="pagination">
-      <span id="page-info">—</span>
-      <div class="pagination-btns" id="page-btns"></div>
-    </div>
+    <div class="pagination"><span id="dev-info">—</span><div class="pg-btns" id="dev-pgs"></div></div>
   </div>
-</main>
+</div>
+
+<!-- ── Payments ── -->
+<div id="tab-payments" class="page">
+  <div class="sec-head">
+    <span class="sec-title">Payment History</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Business</th><th>Phone</th><th>Plan</th>
+        <th>Amount (KES)</th><th>Status</th><th>Reference</th>
+        <th>Licence Key</th><th>Paid At</th><th>Created</th>
+      </tr></thead>
+      <tbody id="pay-tbody"><tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr></tbody>
+    </table>
+    <div class="pagination"><span id="pay-info">—</span><div class="pg-btns" id="pay-pgs"></div></div>
+  </div>
+</div>
+
+<!-- ── Licences ── -->
+<div id="tab-licences" class="page">
+  <div class="sec-head">
+    <span class="sec-title">Licence Registry</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Business</th><th>Device</th><th>Licence Key</th>
+        <th>Plan</th><th>Status</th><th>Activated</th><th>Expires</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="lic-tbody"><tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr></tbody>
+    </table>
+    <div class="pagination"><span id="lic-info">—</span><div class="pg-btns" id="lic-pgs"></div></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
 <script>
-  // ── State ──
-  let currentPage = 1;
-  let totalPages  = 1;
-  let searchTimer = null;
+  // ── config ──
+  const ADMIN_SECRET = prompt('Enter admin secret (or leave blank for read-only):') || '';
 
-  // ── Helpers ──
-  function shortId(id) {
-    if (!id || id.length <= 14) return id ?? '—';
-    return id.slice(0, 8) + '…' + id.slice(-4);
-  }
-
-  function fmtDate(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric',
-    });
-  }
-
-  function fmtDateTime(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-      + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function isActive(lastSeen) {
-    if (!lastSeen) return false;
-    return (Date.now() - new Date(lastSeen).getTime()) < 7 * 24 * 60 * 60 * 1000;
-  }
+  // ── helpers ──
+  const $  = id => document.getElementById(id);
+  const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  const fmtDt = iso => iso ? new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const shortId = id => (!id||id.length<=14) ? (id||'—') : id.slice(0,8)+'…'+id.slice(-4);
+  const isActive = iso => iso && (Date.now()-new Date(iso).getTime()) < 7*86400000;
+  let timers = {};
+  function debounce(key, fn) { clearTimeout(timers[key]); timers[key]=setTimeout(fn||{dev:()=>loadDevices(1)}[key],350); }
 
   function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+    $('toast').textContent=msg; $('toast').classList.add('show');
+    setTimeout(()=>$('toast').classList.remove('show'),2500);
   }
 
-  // ── Load stats ──
+  // ── tabs ──
+  function showTab(name) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    $(`tab-${name}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if(name==='payments') loadPayments(1);
+    if(name==='licences') loadLicences(1);
+    if(name==='devices')  loadDevices(1);
+  }
+
+  // ── stats ──
   async function loadStats() {
-    try {
-      const r = await fetch('/api/stats');
-      if (!r.ok) throw new Error(r.statusText);
-      const s = await r.json();
-      document.getElementById('s-total').textContent   = s.total_installs   ?? '0';
-      document.getElementById('s-7d').textContent      = s.active_7d        ?? '0';
-      document.getElementById('s-biz').textContent     = s.unique_businesses ?? '0';
-      document.getElementById('s-android').textContent = s.android           ?? '0';
-      document.getElementById('s-ios').textContent     = s.ios               ?? '0';
-      document.getElementById('s-30d').textContent     = s.active_30d        ?? '0';
-    } catch (e) {
-      toast('Failed to load stats');
-    }
+    const r = await fetch('/api/stats');
+    const s = await r.json();
+    $('s-total').textContent     = s.total_installs    ?? 0;
+    $('s-7d').textContent        = s.active_7d         ?? 0;
+    $('s-biz').textContent       = s.unique_businesses  ?? 0;
+    $('s-android').textContent   = s.android            ?? 0;
+    $('s-ios').textContent       = s.ios                ?? 0;
+    $('s-lic-active').textContent= s.active_licences    ?? 0;
+    $('s-lic-exp').textContent   = s.expired_licences   ?? 0;
+    $('s-revenue').textContent   = Number(s.total_revenue_kes||0).toLocaleString();
   }
 
-  // ── Load users ──
-  async function loadUsers(page = 1) {
-    currentPage = page;
-    const search   = document.getElementById('search-input').value.trim();
-    const platform = document.getElementById('platform-filter').value;
-
-    const params = new URLSearchParams({ page, limit: 50 });
-    if (search)   params.set('search', search);
-    if (platform) params.set('platform', platform);
-
-    const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = `<tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr>`;
-
-    try {
-      const r = await fetch('/api/users?' + params);
-      if (!r.ok) throw new Error(r.statusText);
-      const res = await r.json();
-
-      totalPages = res.pages || 1;
-      renderTable(res.data, res.total, page, res.pages, res.limit);
-      renderPagination(res.total, page, res.pages);
-    } catch (e) {
-      tbody.innerHTML = `<tr class="state-row"><td colspan="14">⚠️ Failed to load users</td></tr>`;
-    }
+  // ── devices ──
+  let devPage=1;
+  async function loadDevices(page=1) {
+    devPage=page;
+    const search   = $('dev-search').value.trim();
+    const platform = $('dev-platform').value;
+    const status   = $('dev-status').value;
+    const p = new URLSearchParams({page,limit:50});
+    if(search)   p.set('search',search);
+    if(platform) p.set('platform',platform);
+    if(status)   p.set('status',status);
+    $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="13"><span class="spinner"></span>Loading…</td></tr>`;
+    const r = await fetch('/api/users?'+p);
+    const d = await r.json();
+    renderDevices(d); renderPg('dev',d.total,d.page,d.pages,d.limit,'loadDevices');
   }
 
-  function renderTable(rows, total, page, pages, limit) {
-    const tbody = document.getElementById('users-tbody');
-
-    document.getElementById('page-info').textContent =
-      rows.length === 0
-        ? 'No results'
-        : `Showing ${(page - 1) * limit + 1}–${(page - 1) * limit + rows.length} of ${total}`;
-
-    if (rows.length === 0) {
-      tbody.innerHTML = `<tr class="state-row"><td colspan="14">No records found</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = rows.map((u, i) => {
-      const active  = isActive(u.last_seen_at);
-      const platBadge = u.platform === 'ios'
-        ? `<span class="badge badge-ios">iOS</span>`
-        : `<span class="badge badge-android">Android</span>`;
-      const typeBadge = u.is_physical
-        ? `<span class="badge badge-physical">Physical</span>`
-        : `<span class="badge badge-emu">Emulator</span>`;
-      const statusBadge = active
-        ? `<span class="badge badge-active">Active</span>`
-        : `<span class="badge badge-stale">Inactive</span>`;
-
-      return `
-        <tr>
-          <td style="color:var(--muted)">${(page - 1) * 50 + i + 1}</td>
-          <td><strong>${u.business_name || '<em style="color:var(--muted)">—</em>'}</strong></td>
-          <td>${u.owner_name || '—'}</td>
-          <td>${u.location || '—'}</td>
-          <td>${u.device_name || '—'}<br><span style="font-size:11px;color:var(--muted)">${u.device_model || ''}</span></td>
-          <td>${[u.os_name, u.os_version].filter(Boolean).join(' ') || '—'}</td>
-          <td>${u.app_version || '—'}</td>
-          <td>${platBadge}</td>
-          <td>${typeBadge}</td>
-          <td>${statusBadge}</td>
-          <td style="white-space:nowrap">${fmtDate(u.first_seen_at)}</td>
-          <td style="white-space:nowrap">${fmtDateTime(u.last_seen_at)}</td>
-          <td style="text-align:center"><strong>${u.heartbeat_count}</strong></td>
-          <td><span class="device-chip" title="${u.device_id}">${shortId(u.device_id)}</span></td>
-        </tr>
-      `;
+  function renderDevices(d) {
+    $('dev-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No results';
+    if(!d.data.length) { $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="13">No records</td></tr>`; return; }
+    $('dev-tbody').innerHTML = d.data.map((u,i)=>{
+      const ls = u.licence_status;
+      const lsBadge = ls ? `<span class="badge b-${ls}">${ls}</span>` : `<span class="badge b-none">None</span>`;
+      const planBadge = u.licence_plan ? `<span class="badge b-${u.licence_plan}">${u.licence_plan}</span>` : '—';
+      const platBadge = u.platform==='ios' ? `<span class="badge b-ios">iOS</span>` : `<span class="badge b-android">Android</span>`;
+      return `<tr>
+        <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
+        <td><strong>${u.business_name||'<em style="color:var(--muted)">—</em>'}</strong></td>
+        <td>${u.owner_name||'—'}</td>
+        <td>${u.location||'—'}</td>
+        <td>${u.device_name||'—'}<br><span style="font-size:10px;color:var(--muted)">${u.device_model||''}</span></td>
+        <td>${[u.os_name,u.os_version].filter(Boolean).join(' ')||'—'}</td>
+        <td>${platBadge}</td>
+        <td>${lsBadge}</td>
+        <td>${planBadge}</td>
+        <td style="white-space:nowrap">${fmt(u.expires_at)}</td>
+        <td style="white-space:nowrap">${fmtDt(u.last_seen_at)}</td>
+        <td style="text-align:center"><strong>${u.heartbeat_count}</strong></td>
+        <td style="white-space:nowrap">
+          <button class="act-btn act-activate" onclick="adminAction('activate','${u.device_id}')">Activate</button>
+          <button class="act-btn act-suspend"  onclick="adminAction('suspend','${u.device_id}')">Suspend</button>
+        </td>
+      </tr>`;
     }).join('');
   }
 
-  function renderPagination(total, page, pages) {
-    const container = document.getElementById('page-btns');
-    if (pages <= 1) { container.innerHTML = ''; return; }
-
-    let html = `<button class="page-btn" onclick="loadUsers(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹ Prev</button>`;
-
-    // Show at most 7 page buttons
-    const start = Math.max(1, page - 3);
-    const end   = Math.min(pages, start + 6);
-    for (let p = start; p <= end; p++) {
-      html += `<button class="page-btn ${p === page ? 'active' : ''}" onclick="loadUsers(${p})">${p}</button>`;
-    }
-
-    html += `<button class="page-btn" onclick="loadUsers(${page + 1})" ${page >= pages ? 'disabled' : ''}>Next ›</button>`;
-    container.innerHTML = html;
+  // ── payments ──
+  async function loadPayments(page=1) {
+    const p = new URLSearchParams({page,limit:50});
+    $('pay-tbody').innerHTML=`<tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr>`;
+    const r = await fetch('/api/payments?'+p);
+    const d = await r.json();
+    $('pay-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No payments';
+    if(!d.data.length) { $('pay-tbody').innerHTML=`<tr class="state-row"><td colspan="10">No payments yet</td></tr>`; return; }
+    $('pay-tbody').innerHTML = d.data.map((p,i)=>`<tr>
+      <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
+      <td><strong>${p.business_name||'—'}</strong></td>
+      <td>${p.phone||'—'}</td>
+      <td><span class="badge b-${p.plan}">${p.plan}</span></td>
+      <td><strong>KES ${Number(p.amount_kes).toLocaleString()}</strong></td>
+      <td><span class="badge b-${p.status}">${p.status}</span></td>
+      <td><span class="chip">${p.reference}</span></td>
+      <td><span class="chip">${p.licence_key||'—'}</span></td>
+      <td style="white-space:nowrap">${fmtDt(p.paid_at)}</td>
+      <td style="white-space:nowrap">${fmtDt(p.created_at)}</td>
+    </tr>`).join('');
+    renderPg('pay',d.total,d.page,d.pages,d.limit,'loadPayments');
   }
 
-  // ── Search debounce ──
-  function debounceSearch() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => loadUsers(1), 350);
+  // ── licences ──
+  async function loadLicences(page=1) {
+    const p = new URLSearchParams({page,limit:50});
+    $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr>`;
+    const r = await fetch('/api/licences?'+p);
+    const d = await r.json();
+    $('lic-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No licences';
+    if(!d.data.length) { $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="9">No licences yet</td></tr>`; return; }
+    $('lic-tbody').innerHTML = d.data.map((l,i)=>`<tr>
+      <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
+      <td><strong>${l.business_name||'—'}</strong></td>
+      <td>${l.device_name||'—'}</td>
+      <td><span class="chip">${l.licence_key}</span></td>
+      <td><span class="badge b-${l.plan}">${l.plan}</span></td>
+      <td><span class="badge b-${l.status}">${l.status}</span></td>
+      <td style="white-space:nowrap">${fmtDt(l.activated_at)}</td>
+      <td style="white-space:nowrap">${l.expires_at ? fmtDt(l.expires_at) : '<span class="badge b-lifetime">Lifetime</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="act-btn act-activate" onclick="adminAction('activate','${l.device_id}')">Renew</button>
+        <button class="act-btn act-suspend"  onclick="adminAction('suspend','${l.device_id}')">Suspend</button>
+      </td>
+    </tr>`).join('');
+    renderPg('lic',d.total,d.page,d.pages,d.limit,'loadLicences');
   }
 
-  // ── Load all ──
+  // ── admin actions ──
+  async function adminAction(action, deviceId) {
+    const secret = ADMIN_SECRET || prompt('Admin secret:');
+    if(!secret) return;
+    const label = action==='activate' ? 'Activate' : 'Suspend';
+    if(!confirm(`${label} device ${deviceId}?`)) return;
+    const r = await fetch(`/api/admin/${action}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-secret':secret},
+      body: JSON.stringify({deviceId, plan:'monthly'}),
+    });
+    const d = await r.json();
+    if(d.ok) { toast(`✅ ${label}d successfully`); loadAll(); }
+    else toast('❌ Action failed: '+d.error);
+  }
+
+  // ── pagination ──
+  function renderPg(prefix, total, page, pages, limit, fn) {
+    const info = $(`${prefix}-info`);
+    const cont = $(`${prefix}-pgs`);
+    if(pages<=1){cont.innerHTML='';return;}
+    const start=Math.max(1,page-3), end=Math.min(pages,start+6);
+    let h=`<button class="pg-btn" onclick="${fn}(${page-1})" ${page<=1?'disabled':''}>‹</button>`;
+    for(let p=start;p<=end;p++) h+=`<button class="pg-btn ${p===page?'active':''}" onclick="${fn}(${p})">${p}</button>`;
+    h+=`<button class="pg-btn" onclick="${fn}(${page+1})" ${page>=pages?'disabled':''}>›</button>`;
+    cont.innerHTML=h;
+  }
+
+  // ── init ──
   async function loadAll() {
-    await Promise.all([loadStats(), loadUsers(currentPage)]);
-    document.getElementById('last-updated').textContent =
-      'Updated ' + new Date().toLocaleTimeString();
+    await loadStats();
+    await loadDevices(devPage);
+    $('last-upd').textContent='Updated '+new Date().toLocaleTimeString();
   }
 
-  // ── Init + auto-refresh every 60s ──
   loadAll();
   setInterval(loadAll, 60_000);
 </script>
