@@ -154,10 +154,10 @@ app.get('/api/licence/:deviceId', async (req, res) => {
 
     const lic = rows[0];
 
-    // Auto-expire if past expiry date
+    // Auto-expire + delete if past expiry date — fresh row will be created on next payment
     if (lic.expires_at && new Date(lic.expires_at) < new Date()) {
       await pool.query(
-        `UPDATE licences SET status='expired', updated_at=NOW() WHERE device_id=$1`,
+        `DELETE FROM licences WHERE device_id=$1`,
         [deviceId]
       );
       return res.json({ valid: false, reason: 'expired', expiredAt: lic.expires_at });
@@ -264,9 +264,18 @@ app.get('/api/payment/poll/:reference', async (req, res) => {
     // Already resolved
     if (payment.status === 'success') {
       const { rows: licRows } = await pool.query(
-        `SELECT * FROM licences WHERE device_id=$1`, [payment.device_id]
+        `SELECT licence_key, plan, expires_at, activated_at, status FROM licences WHERE device_id=$1`,
+        [payment.device_id]
       );
-      return res.json({ status: 'success', licence: licRows[0] || null });
+      const lic = licRows[0];
+      // Return flat camelCase same shape as first-time success so mobile client handles both identically
+      return res.json({
+        status:     'success',
+        licenceKey: lic?.licence_key  ?? payment.licence_key,
+        plan:       lic?.plan         ?? payment.plan,
+        expiresAt:  lic?.expires_at   ?? null,
+        activatedAt: lic?.activated_at ?? null,
+      });
     }
     if (payment.status === 'failed') {
       return res.json({ status: 'failed' });
@@ -309,7 +318,7 @@ app.get('/api/payment/poll/:reference', async (req, res) => {
         throw e;
       }
 
-      return res.json({ status: 'success', licenceKey, plan: payment.plan, expiresAt });
+      return res.json({ status: 'success', licenceKey, plan: payment.plan, expiresAt, activatedAt: new Date().toISOString() });
     }
 
     if (txStatus === 'failed' || txStatus === 'abandoned') {
