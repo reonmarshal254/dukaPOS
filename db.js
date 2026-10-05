@@ -68,13 +68,13 @@ async function migrate() {
     CREATE TABLE IF NOT EXISTS payments (
       id              SERIAL PRIMARY KEY,
       device_id       TEXT        NOT NULL,
-      reference       TEXT        NOT NULL UNIQUE,  -- Paystack reference
+      reference       TEXT        NOT NULL UNIQUE,
       plan            TEXT        NOT NULL,
       amount_kes      INTEGER     NOT NULL,
       currency        TEXT        NOT NULL DEFAULT 'KES',
-      status          TEXT        NOT NULL DEFAULT 'pending', -- 'pending'|'success'|'failed'
+      status          TEXT        NOT NULL DEFAULT 'pending',
       paystack_txn_id TEXT,
-      licence_key     TEXT,                          -- set after verification
+      licence_key     TEXT,
       paid_at         TIMESTAMPTZ,
       created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );

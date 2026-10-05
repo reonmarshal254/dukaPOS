@@ -295,8 +295,13 @@ app.get('/api/payment/poll/:reference', async (req, res) => {
           INSERT INTO licences (device_id, licence_key, plan, amount_kes, status, activated_at, expires_at)
           VALUES ($1,$2,$3,$4,'active',NOW(),$5)
           ON CONFLICT (device_id) DO UPDATE SET
-            licence_key=$2, plan=$3, amount_kes=$4, status='active',
-            activated_at=NOW(), expires_at=$5, updated_at=NOW()
+            licence_key  = EXCLUDED.licence_key,
+            plan         = EXCLUDED.plan,
+            amount_kes   = EXCLUDED.amount_kes,
+            status       = 'active',
+            activated_at = NOW(),
+            expires_at   = EXCLUDED.expires_at,
+            updated_at   = NOW()
         `, [payment.device_id, licenceKey, payment.plan, payment.amount_kes, expiresAt]);
         await pool.query('COMMIT');
       } catch (e) {
@@ -490,7 +495,13 @@ app.post('/api/admin/activate', adminAuth, async (req, res) => {
       INSERT INTO licences (device_id, licence_key, plan, amount_kes, status, activated_at, expires_at)
       VALUES ($1,$2,$3,$4,'active',NOW(),$5)
       ON CONFLICT (device_id) DO UPDATE SET
-        status='active', licence_key=$2, plan=$3, activated_at=NOW(), expires_at=$5, updated_at=NOW()
+        licence_key  = EXCLUDED.licence_key,
+        plan         = EXCLUDED.plan,
+        amount_kes   = EXCLUDED.amount_kes,
+        status       = 'active',
+        activated_at = NOW(),
+        expires_at   = EXCLUDED.expires_at,
+        updated_at   = NOW()
     `, [deviceId, licenceKey, activePlan, PLANS[activePlan]?.amount || 0, expiresAt]);
 
     res.json({ ok: true, action: 'activated', deviceId, licenceKey, expiresAt });
