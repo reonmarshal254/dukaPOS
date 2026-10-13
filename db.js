@@ -87,6 +87,20 @@ async function migrate() {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_device_id   ON payments (device_id);`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_reference   ON payments (reference);`);
 
+  // ── admin_settings — global flags like billing_enabled ────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_settings (
+      key        TEXT PRIMARY KEY NOT NULL,
+      value      TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  // Seed billing_enabled = true on first run
+  await pool.query(`
+    INSERT INTO admin_settings (key, value) VALUES ('billing_enabled', 'true')
+    ON CONFLICT (key) DO NOTHING;
+  `);
+
   console.log('[db] schema ready');
 }
 

@@ -35,8 +35,20 @@
     .page { display:none; max-width:1280px; margin:0 auto; padding:24px; }
     .page.active { display:block; }
 
-    /* stat grid */
-    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
+    /* stat rows — two explicit 4-col rows */
+    .stat-section-label {
+      font-size:11px; font-weight:700; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.6px;
+      margin-bottom:10px;
+    }
+    .stat-row {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin-bottom:6px;
+    }
+    @media(max-width:900px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:520px){ .stat-row{ grid-template-columns:1fr; } }
     .stat-card { background:var(--surface); border-radius:var(--radius); padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); border-left:4px solid var(--blue); }
     .stat-card .icon { font-size:20px; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
     .stat-card .lbl  { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
@@ -122,15 +134,68 @@
 
 <!-- ── Overview ── -->
 <div id="tab-overview" class="page active">
-  <div class="stat-grid">
-    <div class="stat-card"><div class="icon" style="background:#EFF6FF">📱</div><div class="lbl">Total Installs</div><div class="val" id="s-total">—</div></div>
-    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">✅</div><div class="lbl">Active (7d)</div><div class="val" id="s-7d">—</div></div>
-    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">🏪</div><div class="lbl">Businesses</div><div class="val" id="s-biz">—</div></div>
-    <div class="stat-card" style="border-left-color:#8B5CF6"><div class="icon" style="background:#EDE9FE">🤖</div><div class="lbl">Android</div><div class="val" id="s-android">—</div></div>
-    <div class="stat-card" style="border-left-color:#6366F1"><div class="icon" style="background:#EEF2FF">🍎</div><div class="lbl">iOS</div><div class="val" id="s-ios">—</div></div>
-    <div class="stat-card" style="border-left-color:#10B981"><div class="icon" style="background:#DCFCE7">🔑</div><div class="lbl">Active Licences</div><div class="val" id="s-lic-active">—</div></div>
-    <div class="stat-card" style="border-left-color:#EF4444"><div class="icon" style="background:#FEE2E2">⚠️</div><div class="lbl">Expired</div><div class="val" id="s-lic-exp">—</div></div>
-    <div class="stat-card" style="border-left-color:#F59E0B"><div class="icon" style="background:#FEF3C7">💰</div><div class="lbl">Total Revenue</div><div class="val" id="s-revenue">—</div><div class="sub">KES</div></div>
+
+  <!-- Billing toggle banner -->
+  <div id="billing-banner" style="display:flex;align-items:center;justify-content:space-between;background:#FFFFFF;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid var(--blue);">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">💳 Billing System</div>
+      <div id="billing-sub" style="font-size:12px;color:var(--muted);margin-top:2px">Loading…</div>
+    </div>
+    <label style="position:relative;display:inline-block;width:52px;height:28px;cursor:pointer;">
+      <input type="checkbox" id="billing-toggle" style="opacity:0;width:0;height:0;" onchange="toggleBilling(this.checked)">
+      <span id="billing-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#CBD5E1;border-radius:34px;transition:.3s;">
+        <span id="billing-knob" style="position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);"></span>
+      </span>
+    </label>
+  </div>
+
+  <div class="stat-section-label">📊 Install & Device Stats</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="icon" style="background:#EFF6FF">📱</div>
+      <div class="lbl">Total Installs</div>
+      <div class="val" id="s-total">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#10B981">
+      <div class="icon" style="background:#DCFCE7">✅</div>
+      <div class="lbl">Active (7 days)</div>
+      <div class="val" id="s-7d">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#F59E0B">
+      <div class="icon" style="background:#FEF3C7">🏪</div>
+      <div class="lbl">Unique Businesses</div>
+      <div class="val" id="s-biz">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#64748B">
+      <div class="icon" style="background:#F1F5F9">🌐</div>
+      <div class="lbl">Active (30 days)</div>
+      <div class="val" id="s-30d">—</div>
+    </div>
+  </div>
+
+  <div class="stat-section-label" style="margin-top:20px">💳 Billing & Revenue Stats</div>
+  <div class="stat-row">
+    <div class="stat-card" style="border-left-color:#10B981">
+      <div class="icon" style="background:#DCFCE7">🔑</div>
+      <div class="lbl">Active Licences</div>
+      <div class="val" id="s-lic-active">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#EF4444">
+      <div class="icon" style="background:#FEE2E2">⚠️</div>
+      <div class="lbl">Expired Licences</div>
+      <div class="val" id="s-lic-exp">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#8B5CF6">
+      <div class="icon" style="background:#EDE9FE">⭐</div>
+      <div class="lbl">Lifetime Licences</div>
+      <div class="val" id="s-lic-lifetime">—</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#F59E0B">
+      <div class="icon" style="background:#FEF3C7">💰</div>
+      <div class="lbl">Total Revenue</div>
+      <div class="val" id="s-revenue">—</div>
+      <div class="sub">KES</div>
+    </div>
   </div>
 </div>
 
@@ -160,9 +225,9 @@
         <th>#</th><th>Business</th><th>Owner</th><th>Location</th>
         <th>Device</th><th>OS</th><th>Platform</th>
         <th>Licence</th><th>Plan</th><th>Expires</th>
-        <th>Last Seen</th><th>Opens</th><th>Actions</th>
+        <th>Last Seen</th><th>Opens</th><th>Device ID</th><th>Actions</th>
       </tr></thead>
-      <tbody id="dev-tbody"><tr class="state-row"><td colspan="13"><span class="spinner"></span>Loading…</td></tr></tbody>
+      <tbody id="dev-tbody"><tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
     <div class="pagination"><span id="dev-info">—</span><div class="pg-btns" id="dev-pgs"></div></div>
   </div>
@@ -194,10 +259,10 @@
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>Business</th><th>Device</th><th>Licence Key</th>
+        <th>#</th><th>Business</th><th>Device Name</th><th>Device ID</th><th>Licence Key</th>
         <th>Plan</th><th>Status</th><th>Activated</th><th>Expires</th><th>Actions</th>
       </tr></thead>
-      <tbody id="lic-tbody"><tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr></tbody>
+      <tbody id="lic-tbody"><tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
     <div class="pagination"><span id="lic-info">—</span><div class="pg-btns" id="lic-pgs"></div></div>
   </div>
@@ -238,14 +303,14 @@
   async function loadStats() {
     const r = await fetch('/api/stats');
     const s = await r.json();
-    $('s-total').textContent     = s.total_installs    ?? 0;
-    $('s-7d').textContent        = s.active_7d         ?? 0;
-    $('s-biz').textContent       = s.unique_businesses  ?? 0;
-    $('s-android').textContent   = s.android            ?? 0;
-    $('s-ios').textContent       = s.ios                ?? 0;
-    $('s-lic-active').textContent= s.active_licences    ?? 0;
-    $('s-lic-exp').textContent   = s.expired_licences   ?? 0;
-    $('s-revenue').textContent   = Number(s.total_revenue_kes||0).toLocaleString();
+    $('s-total').textContent        = s.total_installs      ?? 0;
+    $('s-7d').textContent           = s.active_7d           ?? 0;
+    $('s-biz').textContent          = s.unique_businesses   ?? 0;
+    $('s-30d').textContent          = s.active_30d          ?? 0;
+    $('s-lic-active').textContent   = s.active_licences     ?? 0;
+    $('s-lic-exp').textContent      = s.expired_licences    ?? 0;
+    $('s-lic-lifetime').textContent = s.lifetime_licences   ?? 0;
+    $('s-revenue').textContent      = Number(s.total_revenue_kes||0).toLocaleString();
   }
 
   // ── devices ──
@@ -259,7 +324,7 @@
     if(search)   p.set('search',search);
     if(platform) p.set('platform',platform);
     if(status)   p.set('status',status);
-    $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="13"><span class="spinner"></span>Loading…</td></tr>`;
+    $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr>`;
     const r = await fetch('/api/users?'+p);
     const d = await r.json();
     renderDevices(d); renderPg('dev',d.total,d.page,d.pages,d.limit,'loadDevices');
@@ -267,7 +332,7 @@
 
   function renderDevices(d) {
     $('dev-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No results';
-    if(!d.data.length) { $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="13">No records</td></tr>`; return; }
+    if(!d.data.length) { $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="14">No records</td></tr>`; return; }
     $('dev-tbody').innerHTML = d.data.map((u,i)=>{
       const ls = u.licence_status;
       const lsBadge = ls ? `<span class="badge b-${ls}">${ls}</span>` : `<span class="badge b-none">None</span>`;
@@ -286,6 +351,7 @@
         <td style="white-space:nowrap">${fmt(u.expires_at)}</td>
         <td style="white-space:nowrap">${fmtDt(u.last_seen_at)}</td>
         <td style="text-align:center"><strong>${u.heartbeat_count}</strong></td>
+        <td><span class="chip" title="${u.device_id}">${shortId(u.device_id)}</span></td>
         <td style="white-space:nowrap">
           <button class="act-btn act-activate" onclick="adminAction('activate','${u.device_id}')">Activate</button>
           <button class="act-btn act-suspend"  onclick="adminAction('suspend','${u.device_id}')">Suspend</button>
@@ -320,15 +386,16 @@
   // ── licences ──
   async function loadLicences(page=1) {
     const p = new URLSearchParams({page,limit:50});
-    $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="9"><span class="spinner"></span>Loading…</td></tr>`;
+    $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr>`;
     const r = await fetch('/api/licences?'+p);
     const d = await r.json();
     $('lic-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No licences';
-    if(!d.data.length) { $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="9">No licences yet</td></tr>`; return; }
+    if(!d.data.length) { $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="10">No licences yet</td></tr>`; return; }
     $('lic-tbody').innerHTML = d.data.map((l,i)=>`<tr>
       <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
       <td><strong>${l.business_name||'—'}</strong></td>
       <td>${l.device_name||'—'}</td>
+      <td><span class="chip" title="${l.device_id}" style="cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${l.device_id}')">${shortId(l.device_id)}</span></td>
       <td><span class="chip">${l.licence_key}</span></td>
       <td><span class="badge b-${l.plan}">${l.plan}</span></td>
       <td><span class="badge b-${l.status}">${l.status}</span></td>
@@ -370,10 +437,56 @@
     cont.innerHTML=h;
   }
 
+  // ── billing toggle ──
+  async function loadBillingStatus() {
+    try {
+      const r = await fetch('/api/billing-status');
+      const d = await r.json();
+      setBillingUI(d.billingEnabled);
+    } catch { /* ignore */ }
+  }
+
+  function setBillingUI(enabled) {
+    const toggle = $('billing-toggle');
+    const slider = $('billing-slider');
+    const knob   = $('billing-knob');
+    const sub    = $('billing-sub');
+    toggle.checked = enabled;
+    slider.style.background = enabled ? 'var(--blue)' : '#CBD5E1';
+    knob.style.transform    = enabled ? 'translateX(24px)' : 'translateX(0)';
+    sub.textContent = enabled
+      ? 'Billing is ACTIVE — users must subscribe to use the app'
+      : '⚠️ Billing DISABLED — all users have free access';
+    sub.style.color = enabled ? 'var(--muted)' : '#D97706';
+    $('billing-banner').style.borderLeftColor = enabled ? 'var(--blue)' : '#F59E0B';
+  }
+
+  async function toggleBilling(enabled) {
+    const secret = ADMIN_SECRET || prompt('Admin secret:');
+    if (!secret) { loadBillingStatus(); return; } // revert
+    try {
+      const r = await fetch('/api/admin/billing-toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ enabled }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        setBillingUI(d.billingEnabled);
+        toast(d.billingEnabled ? '✅ Billing enabled' : '⚠️ Billing disabled — free access for all');
+      } else {
+        toast('❌ ' + (d.error || 'Toggle failed'));
+        loadBillingStatus(); // revert toggle UI
+      }
+    } catch {
+      toast('❌ Network error');
+      loadBillingStatus();
+    }
+  }
+
   // ── init ──
   async function loadAll() {
-    await loadStats();
-    await loadDevices(devPage);
+    await Promise.all([loadStats(), loadDevices(devPage), loadBillingStatus()]);
     $('last-upd').textContent='Updated '+new Date().toLocaleTimeString();
   }
 

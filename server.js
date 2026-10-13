@@ -33,10 +33,10 @@ const ADMIN_SECRET    = process.env.ADMIN_SECRET        || 'dukapos-admin-2024';
 
 // ─── Pricing ──────────────────────────────────────────────────────────────────
 const PLANS = {
-  daily:    { amount: 100,   days: 1   },
-  weekly:   { amount: 600,   days: 7   },
-  monthly:  { amount: 2000,  days: 30  },
-  lifetime: { amount: 10000, days: null },
+  daily:    { amount: parseInt(process.env.PLAN_DAILY_PRICE    || '100',   10), days: 1   },
+  weekly:   { amount: parseInt(process.env.PLAN_WEEKLY_PRICE   || '600',   10), days: 7   },
+  monthly:  { amount: parseInt(process.env.PLAN_MONTHLY_PRICE  || '2000',  10), days: 30  },
+  lifetime: { amount: parseInt(process.env.PLAN_LIFETIME_PRICE || '10000', 10), days: null },
 };
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
@@ -87,6 +87,16 @@ function paystackRequest(method, path, body) {
     if (data) req.write(data);
     req.end();
   });
+}
+
+// ─── Helper: get billing_enabled flag ────────────────────────────────────────
+async function isBillingEnabled() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT value FROM admin_settings WHERE key = 'billing_enabled'`
+    );
+    return rows[0]?.value !== 'false';
+  } catch { return true; } // default to enabled on error
 }
 
 // ─── POST /api/register ───────────────────────────────────────────────────────
@@ -144,38 +154,101 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/licence/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
+    console.log(`[licence] check for device: ${deviceId?.slice(0,16)}…`);
+
+    // If billing is disabled globally → everyone gets free access
+    const billingEnabled = await isBillingEnabled();
+    if (!billingEnabled) {
+      return res.json({
+        valid: true,
+        plan: 'free',
+        licenceKey: null,
+        expiresAt: null,
+        activatedAt: null,
+        billingEnabled: false,
+      });
+    }
+
     const { rows } = await pool.query(
       `SELECT status, plan, expires_at, licence_key, activated_at
        FROM licences WHERE device_id = $1`,
       [deviceId]
     );
 
-    if (!rows[0]) return res.json({ valid: false, reason: 'no_licence' });
+    if (!rows[0]) return res.json({ valid: false, reason: 'no_licence', billingEnabled: true });
 
     const lic = rows[0];
 
-    // Auto-expire + delete if past expiry date — fresh row will be created on next payment
+    // Auto-expire + delete if past expiry date
     if (lic.expires_at && new Date(lic.expires_at) < new Date()) {
-      await pool.query(
-        `DELETE FROM licences WHERE device_id=$1`,
-        [deviceId]
-      );
-      return res.json({ valid: false, reason: 'expired', expiredAt: lic.expires_at });
+      await pool.query(`DELETE FROM licences WHERE device_id=$1`, [deviceId]);
+      return res.json({ valid: false, reason: 'expired', expiredAt: lic.expires_at, billingEnabled: true });
     }
 
-    if (lic.status === 'suspended') return res.json({ valid: false, reason: 'suspended' });
-    if (lic.status === 'expired')   return res.json({ valid: false, reason: 'expired', expiredAt: lic.expires_at });
+    if (lic.status === 'suspended') return res.json({ valid: false, reason: 'suspended', billingEnabled: true });
+    if (lic.status === 'expired')   return res.json({ valid: false, reason: 'expired', expiredAt: lic.expires_at, billingEnabled: true });
 
     res.json({
-      valid:       true,
-      plan:        lic.plan,
-      licenceKey:  lic.licence_key,
-      expiresAt:   lic.expires_at,
-      activatedAt: lic.activated_at,
+      valid:          true,
+      plan:           lic.plan,
+      licenceKey:     lic.licence_key,
+      expiresAt:      lic.expires_at,
+      activatedAt:    lic.activated_at,
+      billingEnabled: true,
     });
   } catch (err) {
     console.error('[GET /api/licence]', err.message);
     res.status(500).json({ error: 'Licence check failed' });
+  }
+});
+
+// ─── GET /api/account-status/:deviceId ────────────────────────────────────────
+// Mobile app calls this to check if account is suspended
+// Returns device info, business info, and suspension status
+app.get('/api/account-status/:deviceId', async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    console.log(`[account-status] check for device: ${deviceId?.slice(0,16)}…`);
+
+    // Get device and business info
+    const { rows: deviceRows } = await pool.query(
+      `SELECT business_name, owner_name, phone, device_name, device_model, 
+              os_name, platform, last_seen_at
+       FROM installs WHERE device_id = $1`,
+      [deviceId]
+    );
+
+    if (!deviceRows[0]) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    const device = deviceRows[0];
+
+    // Check licence status
+    const { rows: licenceRows } = await pool.query(
+      `SELECT status, plan, expires_at FROM licences WHERE device_id = $1`,
+      [deviceId]
+    );
+
+    const licence = licenceRows[0];
+    const suspended = licence?.status === 'suspended';
+
+    res.json({
+      suspended,
+      deviceId,
+      businessName: device.business_name || 'Unknown Business',
+      ownerName: device.owner_name || 'Unknown Owner',
+      phone: device.phone || 'N/A',
+      deviceName: device.device_name || 'Unknown Device',
+      deviceModel: device.device_model || '',
+      osName: device.os_name || device.platform || 'Unknown OS',
+      lastSeenAt: device.last_seen_at,
+      licenceStatus: licence?.status || 'none',
+      plan: licence?.plan || null,
+    });
+  } catch (err) {
+    console.error('[GET /api/account-status]', err.message);
+    res.status(500).json({ error: 'Account status check failed' });
   }
 });
 
@@ -520,8 +593,43 @@ app.post('/api/admin/activate', adminAuth, async (req, res) => {
   }
 });
 
+// ─── GET /api/billing-status ──────────────────────────────────────────────────
+app.get('/api/billing-status', async (_req, res) => {
+  try {
+    const enabled = await isBillingEnabled();
+    res.json({ billingEnabled: enabled });
+  } catch (err) {
+    console.error('[GET /api/billing-status]', err.message);
+    res.status(500).json({ error: 'Failed to fetch billing status' });
+  }
+});
+
+// ─── POST /api/admin/billing-toggle ──────────────────────────────────────────
+app.post('/api/admin/billing-toggle', adminAuth, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled (boolean) is required' });
+    }
+    await pool.query(`
+      INSERT INTO admin_settings (key, value, updated_at)
+      VALUES ('billing_enabled', $1, NOW())
+      ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()
+    `, [enabled ? 'true' : 'false']);
+
+    console.log(`[billing] Billing ${enabled ? 'ENABLED' : 'DISABLED'} by admin`);
+    res.json({ ok: true, billingEnabled: enabled });
+  } catch (err) {
+    console.error('[POST /api/admin/billing-toggle]', err.message);
+    res.status(500).json({ error: 'Toggle failed' });
+  }
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+app.get('/health', async (_req, res) => {
+  const billingEnabled = await isBillingEnabled();
+  res.json({ status: 'ok', ts: new Date().toISOString(), billingEnabled });
+});
 
 // ─── SPA fallback ─────────────────────────────────────────────────────────────
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
