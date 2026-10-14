@@ -41,10 +41,24 @@ async function migrate() {
       build_number    TEXT,
       platform        TEXT,
       is_physical     BOOLEAN     DEFAULT TRUE,
+      account_status  TEXT        NOT NULL DEFAULT 'active',  -- 'active' | 'deactivated'
       first_seen_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       last_seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       heartbeat_count INTEGER     NOT NULL DEFAULT 1
     );
+  `);
+
+  // Add account_status column if it doesn't exist (for existing databases)
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='installs' AND column_name='account_status'
+      ) THEN
+        ALTER TABLE installs ADD COLUMN account_status TEXT NOT NULL DEFAULT 'active';
+      END IF;
+    END $$;
   `);
 
   // ── licences ──────────────────────────────────────────────────────────────

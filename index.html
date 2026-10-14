@@ -12,7 +12,297 @@
       --bg:#F1F5F9; --surface:#FFFFFF; --border:#E2E8F0;
       --text:#0F172A; --muted:#64748B; --radius:12px;
     }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+    /* ── Lockscreen ── */
+    #lockscreen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    }
+    #lockscreen.hidden { display: none; }
+    
+    .lock-container {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      animation: slideUp 0.5s ease;
+    }
+    
+    .lock-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+    }
+    
+    .lock-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .lock-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    
+    .lock-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .lock-input-group {
+      position: relative;
+    }
+    
+    .lock-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: white;
+    }
+    
+    .lock-input:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .lock-input.error {
+      border-color: var(--red);
+      animation: shake 0.4s;
+    }
+    
+    .lock-error {
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 8px;
+      display: none;
+    }
+    
+    .lock-error.show {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+    
+    .lock-warning {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #92400E;
+      line-height: 1.5;
+      display: none;
+    }
+    
+    .lock-warning.show {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+    
+    .lock-warning strong {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .lock-btn {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-d));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .lock-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    
+    .lock-btn:active {
+      transform: translateY(0);
+    }
+    
+    .lock-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      background: linear-gradient(135deg, #94A3B8, #64748B);
+    }
+
+    /* ── Confirmation Modal ── */
+    #confirm-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    #confirm-modal.show { display: flex; }
+    
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      animation: modalSlideUp 0.3s ease;
+    }
+    
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .modal-icon.warning {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+    
+    .modal-icon.danger {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+    
+    .modal-icon.success {
+      background: #DCFCE7;
+      color: #16A34A;
+    }
+    
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    
+    .modal-message {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .modal-btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .modal-btn-cancel {
+      background: var(--bg);
+      color: var(--text);
+    }
+    
+    .modal-btn-cancel:hover {
+      background: var(--border);
+    }
+    
+    .modal-btn-confirm {
+      background: linear-gradient(135deg, var(--blue), var(--blue-d));
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .modal-btn-confirm.danger {
+      background: linear-gradient(135deg, #DC2626, #B91C1C);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    
+    .modal-btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    
+    .modal-btn-confirm.danger:hover {
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    /* ── App Container ── */
+    #app-container {
+      display: none;
+    }
+    #app-container.unlocked { display: block; }
 
     /* header */
     header { background:linear-gradient(135deg,var(--blue),var(--blue-d)); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; color:#fff; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.15); }
@@ -32,7 +322,7 @@
     .nav-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
 
     /* pages */
-    .page { display:none; max-width:1280px; margin:0 auto; padding:24px; }
+    .page { display:none; max-width:100%; margin:0 auto; padding:24px; }
     .page.active { display:block; }
 
     /* stat rows — two explicit 4-col rows */
@@ -64,13 +354,23 @@
     .toolbar input { width:200px; }
 
     /* table */
-    .table-wrap { background:var(--surface); border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,.06); overflow:hidden; }
-    table { width:100%; border-collapse:collapse; }
-    thead { background:#F8FAFC; }
-    th { padding:9px 13px; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
-    td { padding:10px 13px; font-size:12px; color:var(--text); border-bottom:1px solid var(--border); vertical-align:middle; }
+    .table-wrap { 
+      background:var(--surface); 
+      border-radius:var(--radius); 
+      box-shadow:0 1px 4px rgba(0,0,0,.06); 
+      overflow-x:auto; 
+      overflow-y:visible;
+      position:relative;
+    }
+    table { width:100%; border-collapse:collapse; min-width:1600px; }
+    thead { background:#F8FAFC; position:sticky; top:0; z-index:10; }
+    th { padding:10px 14px; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; background:#F8FAFC; }
+    td { padding:11px 14px; font-size:12px; color:var(--text); border-bottom:1px solid var(--border); vertical-align:middle; min-width:fit-content; }
+    td.col-wide { min-width:180px; max-width:300px; word-wrap:break-word; }
+    td.col-id { font-family:monospace; font-size:11px; min-width:140px; }
+    td.col-action { min-width:200px; white-space:nowrap; }
     tbody tr:last-child td { border-bottom:none; }
-    tbody tr:hover { background:#F8FAFC; }
+    tbody tr:hover { background:#F8FAFC; cursor:pointer; }
 
     /* badges */
     .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; }
@@ -89,10 +389,21 @@
     .b-lifetime{ background:#FEF3C7; color:#92400E; }
 
     /* action buttons */
-    .act-btn { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; border:none; }
+    .act-btn { 
+      padding:6px 12px; 
+      border-radius:7px; 
+      font-size:11px; 
+      font-weight:700; 
+      cursor:pointer; 
+      border:none; 
+      transition:all .2s;
+      box-shadow:0 1px 3px rgba(0,0,0,.1);
+    }
     .act-suspend  { background:#FEE2E2; color:#991B1B; }
+    .act-suspend:hover { background:#FCA5A5; }
     .act-activate { background:#DCFCE7; color:#166534; }
-    .act-btn:hover { opacity:.8; }
+    .act-activate:hover { background:#86EFAC; }
+    .act-btn:active { transform:translateY(1px); box-shadow:0 0 2px rgba(0,0,0,.1); }
 
     /* pagination */
     .pagination { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
@@ -103,15 +414,165 @@
     .pg-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
 
     /* misc */
-    .chip { font-family:monospace; font-size:10px; background:#F1F5F9; border-radius:4px; padding:2px 5px; color:var(--muted); }
+    .chip { font-family:monospace; font-size:10px; background:#F1F5F9; border-radius:4px; padding:2px 5px; color:var(--muted); cursor:pointer; transition:all .2s; }
+    .chip:hover { background:#E2E8F0; color:var(--text); }
     .state-row td { text-align:center; padding:40px; color:var(--muted); }
     .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:middle; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    #toast { position:fixed; bottom:20px; right:20px; background:#1E293B; color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; font-weight:600; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; }
+    #toast { position:fixed; bottom:20px; right:20px; background:#1E293B; color:#fff; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:600; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; box-shadow:0 4px 12px rgba(0,0,0,.3); }
     #toast.show { opacity:1; }
+    
+    /* Copy hint */
+    .copy-hint { position:relative; }
+    .copy-hint::after { content:'Click to copy'; position:absolute; left:50%; top:-30px; transform:translateX(-50%); background:#1E293B; color:#fff; padding:4px 8px; border-radius:6px; font-size:10px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .copy-hint:hover::after { opacity:1; }
+    
+    /* Scrollbar styling */
+    .table-wrap::-webkit-scrollbar { height:12px; }
+    .table-wrap::-webkit-scrollbar-track { background:#F1F5F9; border-radius:6px; margin:0 10px; }
+    .table-wrap::-webkit-scrollbar-thumb { background:#94A3B8; border-radius:6px; border:2px solid #F1F5F9; }
+    .table-wrap::-webkit-scrollbar-thumb:hover { background:#64748B; }
+    
+    /* Logs console scrollbar */
+    #logs-console::-webkit-scrollbar { width:10px; }
+    #logs-console::-webkit-scrollbar-track { background:#1E1E1E; }
+    #logs-console::-webkit-scrollbar-thumb { background:#404040; border-radius:5px; }
+    #logs-console::-webkit-scrollbar-thumb:hover { background:#606060; }
+    
+    /* Log entry styles */
+    .log-entry { 
+      padding:8px 10px; 
+      margin:2px 0; 
+      border-radius:4px; 
+      font-family:'Consolas','Courier New',monospace; 
+      font-size:12px;
+      line-height:1.5;
+      transition:background .15s;
+      position:relative;
+      cursor:pointer;
+    }
+    .log-entry:hover { background:rgba(255,255,255,.05); }
+    .log-entry.log-ERROR { border-left:3px solid #FF5555; background:rgba(255,85,85,.1); }
+    .log-entry.log-WARNING { border-left:3px solid #FFB86C; background:rgba(255,184,108,.08); }
+    .log-entry.log-SUCCESS { border-left:3px solid #50FA7B; background:rgba(80,250,123,.08); }
+    .log-entry.log-INFO { border-left:3px solid #8BE9FD; background:rgba(139,233,253,.06); }
+    .log-entry.log-REQUEST { border-left:3px solid #BD93F9; background:rgba(189,147,249,.08); }
+    .log-entry.log-RESPONSE { border-left:3px solid #6272A4; background:rgba(98,114,164,.08); }
+    
+    .log-timestamp { color:#6272A4; font-size:11px; margin-right:8px; }
+    .log-type { font-weight:700; margin-right:8px; }
+    .log-type.ERROR { color:#FF5555; }
+    .log-type.WARNING { color:#FFB86C; }
+    .log-type.SUCCESS { color:#50FA7B; }
+    .log-type.INFO { color:#8BE9FD; }
+    .log-type.REQUEST { color:#BD93F9; }
+    .log-type.RESPONSE { color:#6272A4; }
+    .log-category { color:#F1FA8C; margin-right:8px; font-size:11px; padding:1px 6px; background:rgba(241,250,140,.15); border-radius:3px; }
+    .log-message { color:#F8F8F2; }
+    .log-details { color:#909090; font-size:11px; margin-top:4px; padding-left:20px; font-style:italic; }
+    .log-copy-btn { 
+      position:absolute; 
+      right:8px; 
+      top:8px; 
+      background:rgba(255,255,255,.1); 
+      border:1px solid rgba(255,255,255,.2); 
+      color:#FFF; 
+      padding:3px 8px; 
+      border-radius:4px; 
+      font-size:10px; 
+      cursor:pointer;
+      opacity:0;
+      transition:opacity .2s;
+    }
+    .log-entry:hover .log-copy-btn { opacity:1; }
+    .log-copy-btn:hover { background:rgba(255,255,255,.2); }
+    
+    /* Scroll hint indicator */
+    .table-wrap::after {
+      content: '← Scroll to see all columns →';
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(37, 99, 235, 0.9);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 5;
+    }
+    
+    .table-wrap:hover::after {
+      opacity: 1;
+    }
+    
+    @media (max-width: 1650px) {
+      .table-wrap::after {
+        opacity: 0.8;
+      }
+    }
   </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- LOCKSCREEN -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div id="lockscreen">
+  <div class="lock-container">
+    <div class="lock-logo">D</div>
+    <h1 class="lock-title">DukaPOS Admin</h1>
+    <p class="lock-subtitle">Enter your credentials to access the dashboard</p>
+    
+    <form class="lock-form" onsubmit="attemptUnlock(event)">
+      <div class="lock-input-group">
+        <input 
+          type="password" 
+          id="lock-secret" 
+          class="lock-input" 
+          placeholder="Enter admin secret"
+          autocomplete="off"
+          required
+        />
+      </div>
+      <div class="lock-error" id="lock-error">❌ Invalid credentials. Please try again.</div>
+      <div class="lock-warning" id="lock-warning">
+        <strong>⚠️ Rate Limiting Active</strong>
+        Progressive delays apply after failed attempts. 3+ failures trigger 30s lockout. 5+ failures trigger 5-minute lockout.
+      </div>
+      <button type="submit" class="lock-btn" id="lock-btn">
+        🔓 Unlock Dashboard
+      </button>
+    </form>
+    
+    <p style="margin-top:24px;font-size:12px;color:var(--muted)">
+      🔒 Secure access only
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- CONFIRMATION MODAL -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div id="confirm-modal">
+  <div class="modal-content">
+    <div class="modal-icon" id="modal-icon">⚠️</div>
+    <h2 class="modal-title" id="modal-title">Confirm Action</h2>
+    <p class="modal-message" id="modal-message">Are you sure you want to proceed?</p>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- APP CONTAINER -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div id="app-container">
 
 <header>
   <div class="hbrand">
@@ -130,6 +591,7 @@
   <div class="nav-tab" onclick="showTab('devices')">📱 Devices</div>
   <div class="nav-tab" onclick="showTab('payments')">💳 Payments</div>
   <div class="nav-tab" onclick="showTab('licences')">🔑 Licences</div>
+  <div class="nav-tab" onclick="showTab('logs')">📋 Logs</div>
 </div>
 
 <!-- ── Overview ── -->
@@ -219,15 +681,29 @@
       </select>
     </div>
   </div>
+  <div style="background:#EFF6FF;border-left:3px solid var(--blue);padding:10px 14px;margin-bottom:10px;border-radius:8px;font-size:12px;color:var(--blue);">
+    💡 <strong>Tip:</strong> Use the horizontal scrollbar below to see all columns including Actions
+  </div>
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>Business</th><th>Owner</th><th>Location</th>
-        <th>Device</th><th>OS</th><th>Platform</th>
-        <th>Licence</th><th>Plan</th><th>Expires</th>
-        <th>Last Seen</th><th>Opens</th><th>Device ID</th><th>Actions</th>
+        <th style="width:40px">#</th>
+        <th>Business</th>
+        <th>Owner</th>
+        <th>Location</th>
+        <th>Device</th>
+        <th>OS</th>
+        <th style="text-align:center">Platform</th>
+        <th style="text-align:center">Account Status</th>
+        <th style="text-align:center">Licence</th>
+        <th style="text-align:center">Plan</th>
+        <th>Expires</th>
+        <th>Last Seen</th>
+        <th style="text-align:center;width:60px">Opens</th>
+        <th>Device ID <span style="font-size:9px;opacity:.6">📋</span></th>
+        <th style="background:#FEF3C7;font-weight:800">Actions</th>
       </tr></thead>
-      <tbody id="dev-tbody"><tr class="state-row"><td colspan="14"><span class="spinner"></span>Loading…</td></tr></tbody>
+      <tbody id="dev-tbody"><tr class="state-row"><td colspan="15"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
     <div class="pagination"><span id="dev-info">—</span><div class="pg-btns" id="dev-pgs"></div></div>
   </div>
@@ -241,9 +717,16 @@
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>Business</th><th>Phone</th><th>Plan</th>
-        <th>Amount (KES)</th><th>Status</th><th>Reference</th>
-        <th>Licence Key</th><th>Paid At</th><th>Created</th>
+        <th style="width:40px">#</th>
+        <th>Business</th>
+        <th>Phone</th>
+        <th style="text-align:center">Plan</th>
+        <th style="text-align:right">Amount (KES)</th>
+        <th style="text-align:center">Status</th>
+        <th>Reference <span style="font-size:9px;opacity:.6">📋</span></th>
+        <th>Licence Key <span style="font-size:9px;opacity:.6">📋</span></th>
+        <th>Paid At</th>
+        <th>Created</th>
       </tr></thead>
       <tbody id="pay-tbody"><tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
@@ -259,8 +742,16 @@
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>#</th><th>Business</th><th>Device Name</th><th>Device ID</th><th>Licence Key</th>
-        <th>Plan</th><th>Status</th><th>Activated</th><th>Expires</th><th>Actions</th>
+        <th style="width:40px">#</th>
+        <th>Business</th>
+        <th>Device Name</th>
+        <th>Device ID <span style="font-size:9px;opacity:.6">📋</span></th>
+        <th>Licence Key <span style="font-size:9px;opacity:.6">📋</span></th>
+        <th style="text-align:center">Plan</th>
+        <th style="text-align:center">Status</th>
+        <th>Activated</th>
+        <th>Expires</th>
+        <th>Actions</th>
       </tr></thead>
       <tbody id="lic-tbody"><tr class="state-row"><td colspan="10"><span class="spinner"></span>Loading…</td></tr></tbody>
     </table>
@@ -268,11 +759,252 @@
   </div>
 </div>
 
+<!-- ── Logs ── -->
+<div id="tab-logs" class="page">
+  <div class="sec-head">
+    <span class="sec-title">System Logs</span>
+    <div class="toolbar">
+      <select id="log-type-filter" onchange="filterLogs()">
+        <option value="">All Types</option>
+        <option value="REQUEST">🔵 REQUEST</option>
+        <option value="RESPONSE">🟣 RESPONSE</option>
+        <option value="SUCCESS">🟢 SUCCESS</option>
+        <option value="ERROR">🔴 ERROR</option>
+        <option value="WARNING">🟡 WARNING</option>
+        <option value="INFO">🔷 INFO</option>
+      </select>
+      <select id="log-category-filter" onchange="filterLogs()">
+        <option value="">All Categories</option>
+        <option value="HTTP">HTTP</option>
+        <option value="DB">DATABASE</option>
+        <option value="AUTH">AUTH</option>
+        <option value="PAYSTACK">PAYSTACK</option>
+        <option value="SYSTEM">SYSTEM</option>
+      </select>
+      <button id="refresh-logs-btn" onclick="loadLogs()" style="padding:6px 14px;border-radius:8px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">🔄 Refresh</button>
+      <button onclick="clearLogsDisplay()" style="padding:6px 14px;border-radius:8px;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">🗑️ Clear Display</button>
+    </div>
+  </div>
+  
+  <!-- Windows Console Style -->
+  <div id="logs-console" style="background:#0C0C0C;border-radius:var(--radius);padding:16px;font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.6;color:#CCCCCC;max-height:600px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.3);border:1px solid #1E1E1E">
+    <div id="logs-content">
+      <div style="color:#00FF00">DukaPOS Admin Console v1.0</div>
+      <div style="color:#808080">Logs are displayed in real-time. Use filters above to narrow down results.</div>
+      <div style="color:#808080;margin-bottom:16px">═══════════════════════════════════════════════════════════════════════</div>
+      <div id="logs-entries" style="display:flex;flex-direction:column-reverse">
+        <div style="color:#808080;text-align:center;padding:40px">⏳ Loading logs...</div>
+      </div>
+    </div>
+  </div>
+  
+  <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+    <span id="logs-count" style="font-size:12px;color:var(--muted)">—</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="exportLogs()" style="padding:6px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:12px;font-weight:600">📥 Export Logs</button>
+      <button onclick="loadLogs()" style="padding:6px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:12px;font-weight:600">↻ Auto-refresh: <span id="auto-refresh-status">OFF</span></button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
+</div><!-- End #app-container -->
+
 <script>
+  // ══════════════════════════════════════════════════════════════════════════
+  // LOCKSCREEN & AUTHENTICATION
+  // ══════════════════════════════════════════════════════════════════════════
+  // RATE LIMITING STATE
+  // ══════════════════════════════════════════════════════════════════════════
+  let ADMIN_SECRET = '';
+  let isUnlocked = false;
+  let failedAttempts = 0;
+  let lockoutUntil = null;
+  let attemptDelays = [0, 1000, 3000, 5000, 10000]; // Progressive delays in ms
+
+  function attemptUnlock(event) {
+    event.preventDefault();
+    const input = document.getElementById('lock-secret');
+    const error = document.getElementById('lock-error');
+    const btn = document.getElementById('lock-btn');
+    const secret = input.value.trim();
+    
+    // Check if currently in lockout period
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remainingSeconds = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      showLockError(`Too many attempts. Please wait ${remainingSeconds}s`);
+      return;
+    }
+    
+    if (!secret) {
+      showLockError('Please enter admin secret');
+      return;
+    }
+    
+    // Apply delay based on failed attempts
+    const delay = attemptDelays[Math.min(failedAttempts, attemptDelays.length - 1)] || 0;
+    
+    btn.disabled = true;
+    btn.textContent = delay > 0 ? '⏳ Rate limited...' : '🔄 Verifying...';
+    
+    // Show rate limit warning if delayed
+    if (delay > 0) {
+      showLockError(`Rate limited. Waiting ${delay/1000}s...`);
+    }
+    
+    setTimeout(() => {
+      // Verify credentials by making a test API call
+      btn.textContent = '🔄 Verifying...';
+      
+      fetch('/api/billing-status', {
+        headers: { 'x-admin-secret': secret }
+      })
+      .then(res => {
+        if (res.ok) {
+          // Valid credentials - reset rate limiting
+          ADMIN_SECRET = secret;
+          isUnlocked = true;
+          failedAttempts = 0;
+          lockoutUntil = null;
+          unlockDashboard();
+        } else {
+          // Invalid credentials - apply rate limiting
+          failedAttempts++;
+          
+          // Show rate limit warning after first failure
+          if (failedAttempts === 1) {
+            document.getElementById('lock-warning').classList.add('show');
+          }
+          
+          // Progressive lockout strategy
+          if (failedAttempts >= 5) {
+            // After 5 failures: 5-minute lockout
+            lockoutUntil = Date.now() + (5 * 60 * 1000);
+            showLockError('🔒 Too many attempts. Locked for 5 minutes.');
+          } else if (failedAttempts >= 3) {
+            // After 3 failures: 30-second lockout
+            lockoutUntil = Date.now() + 30000;
+            showLockError(`🔒 Too many attempts. Locked for 30 seconds. (${failedAttempts}/5)`);
+          } else {
+            showLockError(`Invalid credentials. ${5 - failedAttempts} attempts remaining.`);
+          }
+          
+          btn.disabled = false;
+          btn.textContent = '🔓 Unlock Dashboard';
+          input.classList.add('error');
+          setTimeout(() => input.classList.remove('error'), 400);
+        }
+      })
+      .catch(() => {
+        showLockError('Connection error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = '🔓 Unlock Dashboard';
+      });
+    }, delay);
+  }
+  
+  function showLockError(message) {
+    const error = document.getElementById('lock-error');
+    error.textContent = '❌ ' + message;
+    error.classList.add('show');
+    
+    // Keep visible longer for lockout messages
+    const timeout = message.includes('Locked for') ? 10000 : 3000;
+    setTimeout(() => error.classList.remove('show'), timeout);
+  }
+  
+  function unlockDashboard() {
+    document.getElementById('lockscreen').classList.add('hidden');
+    document.getElementById('app-container').classList.add('unlocked');
+    loadAll(); // Load data after unlock
+  }
+  
+  // Update lockout countdown in real-time
+  setInterval(() => {
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const btn = document.getElementById('lock-btn');
+      const remainingSeconds = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      btn.disabled = true;
+      btn.textContent = `🔒 Locked (${remainingSeconds}s)`;
+    } else if (lockoutUntil && Date.now() >= lockoutUntil) {
+      // Lockout expired
+      lockoutUntil = null;
+      const btn = document.getElementById('lock-btn');
+      btn.disabled = false;
+      btn.textContent = '🔓 Unlock Dashboard';
+    }
+  }, 1000);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // CONFIRMATION MODAL
+  // ══════════════════════════════════════════════════════════════════════════
+  let modalResolve = null;
+  
+  function showModal(options) {
+    return new Promise((resolve) => {
+      modalResolve = resolve;
+      
+      const modal = document.getElementById('confirm-modal');
+      const icon = document.getElementById('modal-icon');
+      const title = document.getElementById('modal-title');
+      const message = document.getElementById('modal-message');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+      
+      // Set content
+      title.textContent = options.title || 'Confirm Action';
+      message.textContent = options.message || 'Are you sure?';
+      
+      // Set icon
+      icon.className = 'modal-icon ' + (options.type || 'warning');
+      icon.textContent = {
+        warning: '⚠️',
+        danger: '🚨',
+        success: '✅'
+      }[options.type || 'warning'];
+      
+      // Set confirm button style
+      confirmBtn.className = 'modal-btn modal-btn-confirm';
+      if (options.type === 'danger') {
+        confirmBtn.classList.add('danger');
+      }
+      confirmBtn.textContent = options.confirmText || 'Confirm';
+      
+      modal.classList.add('show');
+    });
+  }
+  
+  function closeModal() {
+    const modal = document.getElementById('confirm-modal');
+    modal.classList.remove('show');
+    if (modalResolve) {
+      modalResolve(false);
+      modalResolve = null;
+    }
+  }
+  
+  function confirmAction() {
+    const modal = document.getElementById('confirm-modal');
+    modal.classList.remove('show');
+    if (modalResolve) {
+      modalResolve(true);
+      modalResolve = null;
+    }
+  }
+  
+  // Close modal on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('confirm-modal').classList.contains('show')) {
+      closeModal();
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ORIGINAL APP CODE
+  // ══════════════════════════════════════════════════════════════════════════
+  
   // ── config ──
-  const ADMIN_SECRET = prompt('Enter admin secret (or leave blank for read-only):') || '';
+  // ADMIN_SECRET now set by lockscreen
 
   // ── helpers ──
   const $  = id => document.getElementById(id);
@@ -282,6 +1014,30 @@
   const isActive = iso => iso && (Date.now()-new Date(iso).getTime()) < 7*86400000;
   let timers = {};
   function debounce(key, fn) { clearTimeout(timers[key]); timers[key]=setTimeout(fn||{dev:()=>loadDevices(1)}[key],350); }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(
+        () => toast('📋 Copied to clipboard'),
+        () => toast('❌ Copy failed')
+      );
+    } else {
+      // Fallback for older browsers
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      try {
+        document.execCommand('copy');
+        toast('📋 Copied to clipboard');
+      } catch {
+        toast('❌ Copy failed');
+      }
+      document.body.removeChild(el);
+    }
+  }
 
   function toast(msg) {
     $('toast').textContent=msg; $('toast').classList.add('show');
@@ -297,6 +1053,7 @@
     if(name==='payments') loadPayments(1);
     if(name==='licences') loadLicences(1);
     if(name==='devices')  loadDevices(1);
+    if(name==='logs') loadLogs();
   }
 
   // ── stats ──
@@ -332,29 +1089,50 @@
 
   function renderDevices(d) {
     $('dev-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No results';
-    if(!d.data.length) { $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="14">No records</td></tr>`; return; }
+    if(!d.data.length) { $('dev-tbody').innerHTML=`<tr class="state-row"><td colspan="15">No records</td></tr>`; return; }
     $('dev-tbody').innerHTML = d.data.map((u,i)=>{
       const ls = u.licence_status;
+      const as = u.account_status || 'active';
+      const isDeactivated = as === 'deactivated';
+      
       const lsBadge = ls ? `<span class="badge b-${ls}">${ls}</span>` : `<span class="badge b-none">None</span>`;
       const planBadge = u.licence_plan ? `<span class="badge b-${u.licence_plan}">${u.licence_plan}</span>` : '—';
       const platBadge = u.platform==='ios' ? `<span class="badge b-ios">iOS</span>` : `<span class="badge b-android">Android</span>`;
+      
+      // Account status badge
+      const accountBadge = isDeactivated 
+        ? `<span class="badge b-suspended">🔴 Deactivated</span>`
+        : `<span class="badge b-active">✅ Active</span>`;
+      
+      // Action buttons based on account status
+      const activateBtn = isDeactivated
+        ? `<button class="act-btn act-activate" onclick="accountAction('activate','${u.device_id}')" style="width:100%">✓ Activate</button>`
+        : `<button class="act-btn act-activate" onclick="accountAction('activate','${u.device_id}')" style="width:100%;opacity:0.4;cursor:not-allowed" disabled>✓ Activate</button>`;
+      
+      const deactivateBtn = isDeactivated
+        ? `<button class="act-btn act-suspend" onclick="accountAction('deactivate','${u.device_id}')" style="width:100%;opacity:0.4;cursor:not-allowed" disabled>⏸ Deactivate</button>`
+        : `<button class="act-btn act-suspend" onclick="accountAction('deactivate','${u.device_id}')" style="width:100%">⏸ Deactivate</button>`;
+      
       return `<tr>
-        <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
-        <td><strong>${u.business_name||'<em style="color:var(--muted)">—</em>'}</strong></td>
-        <td>${u.owner_name||'—'}</td>
-        <td>${u.location||'—'}</td>
-        <td>${u.device_name||'—'}<br><span style="font-size:10px;color:var(--muted)">${u.device_model||''}</span></td>
-        <td>${[u.os_name,u.os_version].filter(Boolean).join(' ')||'—'}</td>
-        <td>${platBadge}</td>
-        <td>${lsBadge}</td>
-        <td>${planBadge}</td>
-        <td style="white-space:nowrap">${fmt(u.expires_at)}</td>
-        <td style="white-space:nowrap">${fmtDt(u.last_seen_at)}</td>
-        <td style="text-align:center"><strong>${u.heartbeat_count}</strong></td>
-        <td><span class="chip" title="${u.device_id}">${shortId(u.device_id)}</span></td>
-        <td style="white-space:nowrap">
-          <button class="act-btn act-activate" onclick="adminAction('activate','${u.device_id}')">Activate</button>
-          <button class="act-btn act-suspend"  onclick="adminAction('suspend','${u.device_id}')">Suspend</button>
+        <td style="color:var(--muted);text-align:center;width:40px">${(d.page-1)*50+i+1}</td>
+        <td class="col-wide"><strong style="font-size:13px">${u.business_name||'<em style="color:var(--muted)">—</em>'}</strong></td>
+        <td style="min-width:120px">${u.owner_name||'—'}</td>
+        <td style="min-width:100px">${u.location||'—'}</td>
+        <td style="min-width:140px">${u.device_name||'—'}<br><span style="font-size:10px;color:var(--muted);margin-top:2px;display:block">${u.device_model||''}</span></td>
+        <td style="min-width:110px;white-space:nowrap">${[u.os_name,u.os_version].filter(Boolean).join(' ')||'—'}</td>
+        <td style="text-align:center;width:80px">${platBadge}</td>
+        <td style="text-align:center;width:120px">${accountBadge}</td>
+        <td style="text-align:center;width:90px">${lsBadge}</td>
+        <td style="text-align:center;width:90px">${planBadge}</td>
+        <td style="white-space:nowrap;min-width:100px">${fmt(u.expires_at)}</td>
+        <td style="white-space:nowrap;min-width:120px">${fmtDt(u.last_seen_at)}</td>
+        <td style="text-align:center;width:60px"><strong>${u.heartbeat_count}</strong></td>
+        <td class="col-id" title="${u.device_id}" style="cursor:pointer" onclick="copyToClipboard('${u.device_id}')">${u.device_id}</td>
+        <td class="col-action" style="background:#FEFCE8;padding:8px 12px">
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
+            ${activateBtn}
+            ${deactivateBtn}
+          </div>
         </td>
       </tr>`;
     }).join('');
@@ -369,16 +1147,16 @@
     $('pay-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No payments';
     if(!d.data.length) { $('pay-tbody').innerHTML=`<tr class="state-row"><td colspan="10">No payments yet</td></tr>`; return; }
     $('pay-tbody').innerHTML = d.data.map((p,i)=>`<tr>
-      <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
-      <td><strong>${p.business_name||'—'}</strong></td>
-      <td>${p.phone||'—'}</td>
-      <td><span class="badge b-${p.plan}">${p.plan}</span></td>
-      <td><strong>KES ${Number(p.amount_kes).toLocaleString()}</strong></td>
-      <td><span class="badge b-${p.status}">${p.status}</span></td>
-      <td><span class="chip">${p.reference}</span></td>
-      <td><span class="chip">${p.licence_key||'—'}</span></td>
-      <td style="white-space:nowrap">${fmtDt(p.paid_at)}</td>
-      <td style="white-space:nowrap">${fmtDt(p.created_at)}</td>
+      <td style="color:var(--muted);text-align:center;width:40px">${(d.page-1)*50+i+1}</td>
+      <td class="col-wide"><strong style="font-size:13px">${p.business_name||'—'}</strong></td>
+      <td style="min-width:110px">${p.phone||'—'}</td>
+      <td style="text-align:center;width:90px"><span class="badge b-${p.plan}">${p.plan}</span></td>
+      <td style="min-width:100px;text-align:right"><strong style="font-size:13px">KES ${Number(p.amount_kes).toLocaleString()}</strong></td>
+      <td style="text-align:center;width:90px"><span class="badge b-${p.status}">${p.status}</span></td>
+      <td class="col-id" style="cursor:pointer" title="${p.reference}" onclick="copyToClipboard('${p.reference}')">${p.reference}</td>
+      <td class="col-id" style="cursor:pointer" title="${p.licence_key||'—'}" onclick="copyToClipboard('${p.licence_key||''}')">${p.licence_key||'—'}</td>
+      <td style="white-space:nowrap;min-width:130px">${fmtDt(p.paid_at)}</td>
+      <td style="white-space:nowrap;min-width:130px">${fmtDt(p.created_at)}</td>
     </tr>`).join('');
     renderPg('pay',d.total,d.page,d.pages,d.limit,'loadPayments');
   }
@@ -391,38 +1169,128 @@
     const d = await r.json();
     $('lic-info').textContent = d.data.length ? `Showing ${(d.page-1)*d.limit+1}–${(d.page-1)*d.limit+d.data.length} of ${d.total}` : 'No licences';
     if(!d.data.length) { $('lic-tbody').innerHTML=`<tr class="state-row"><td colspan="10">No licences yet</td></tr>`; return; }
-    $('lic-tbody').innerHTML = d.data.map((l,i)=>`<tr>
-      <td style="color:var(--muted)">${(d.page-1)*50+i+1}</td>
-      <td><strong>${l.business_name||'—'}</strong></td>
-      <td>${l.device_name||'—'}</td>
-      <td><span class="chip" title="${l.device_id}" style="cursor:pointer;" onclick="navigator.clipboard&&navigator.clipboard.writeText('${l.device_id}')">${shortId(l.device_id)}</span></td>
-      <td><span class="chip">${l.licence_key}</span></td>
-      <td><span class="badge b-${l.plan}">${l.plan}</span></td>
-      <td><span class="badge b-${l.status}">${l.status}</span></td>
-      <td style="white-space:nowrap">${fmtDt(l.activated_at)}</td>
-      <td style="white-space:nowrap">${l.expires_at ? fmtDt(l.expires_at) : '<span class="badge b-lifetime">Lifetime</span>'}</td>
-      <td style="white-space:nowrap">
-        <button class="act-btn act-activate" onclick="adminAction('activate','${l.device_id}')">Renew</button>
-        <button class="act-btn act-suspend"  onclick="adminAction('suspend','${l.device_id}')">Suspend</button>
-      </td>
-    </tr>`).join('');
+    $('lic-tbody').innerHTML = d.data.map((l,i)=>{
+      // Dynamic actions based on licence status
+      let actionButtons = '';
+      if (l.status === 'suspended') {
+        actionButtons = `
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+            <span class="badge b-suspended" style="font-size:11px;padding:3px 10px">⚠️ Suspended</span>
+            <button class="act-btn act-activate" onclick="adminAction('activate','${l.device_id}')" style="width:100%">✓ Reactivate</button>
+          </div>`;
+      } else if (l.status === 'expired') {
+        actionButtons = `
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+            <span class="badge b-expired" style="font-size:11px;padding:3px 10px">⏰ Expired</span>
+            <button class="act-btn act-activate" onclick="adminAction('activate','${l.device_id}')" style="width:100%">🔄 Renew</button>
+          </div>`;
+      } else {
+        // Active
+        actionButtons = `
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+            <span class="badge b-active" style="font-size:11px;padding:3px 10px">✅ Active</span>
+            <button class="act-btn act-suspend" onclick="adminAction('suspend','${l.device_id}')" style="width:100%">⏸ Suspend</button>
+          </div>`;
+      }
+      
+      return `<tr>
+        <td style="color:var(--muted);text-align:center;width:40px">${(d.page-1)*50+i+1}</td>
+        <td class="col-wide"><strong style="font-size:13px">${l.business_name||'—'}</strong></td>
+        <td style="min-width:120px">${l.device_name||'—'}</td>
+        <td class="col-id" title="${l.device_id}" style="cursor:pointer" onclick="copyToClipboard('${l.device_id}')">${l.device_id}</td>
+        <td class="col-id" title="${l.licence_key}" style="cursor:pointer;font-weight:600;color:var(--blue)" onclick="copyToClipboard('${l.licence_key}')">${l.licence_key}</td>
+        <td style="text-align:center;width:90px"><span class="badge b-${l.plan}">${l.plan}</span></td>
+        <td style="text-align:center;width:90px"><span class="badge b-${l.status}">${l.status}</span></td>
+        <td style="white-space:nowrap;min-width:130px">${fmtDt(l.activated_at)}</td>
+        <td style="white-space:nowrap;min-width:110px">${l.expires_at ? fmtDt(l.expires_at) : '<span class="badge b-lifetime">Lifetime</span>'}</td>
+        <td class="col-action" style="background:#FEFCE8;padding:8px 12px">
+          ${actionButtons}
+        </td>
+      </tr>`;
+    }).join('');
     renderPg('lic',d.total,d.page,d.pages,d.limit,'loadLicences');
   }
 
   // ── admin actions ──
   async function adminAction(action, deviceId) {
-    const secret = ADMIN_SECRET || prompt('Admin secret:');
-    if(!secret) return;
-    const label = action==='activate' ? 'Activate' : 'Suspend';
-    if(!confirm(`${label} device ${deviceId}?`)) return;
+    if (!isUnlocked) {
+      toast('❌ Please unlock dashboard first');
+      return;
+    }
+    
+    const actionLabels = {
+      activate: { title: 'Activate Licence', message: 'Grant a monthly licence to this device?', icon: 'success', confirmText: 'Activate' },
+      suspend: { title: 'Suspend Licence', message: 'Suspend the licence for this device? User will lose access.', icon: 'danger', confirmText: 'Suspend' }
+    };
+    
+    const config = actionLabels[action] || {};
+    const confirmed = await showModal({
+      title: config.title,
+      message: `${config.message}\n\nDevice: ${deviceId.slice(0, 16)}...`,
+      type: config.icon,
+      confirmText: config.confirmText
+    });
+    
+    if (!confirmed) return;
+    
     const r = await fetch(`/api/admin/${action}`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-admin-secret':secret},
-      body: JSON.stringify({deviceId, plan:'monthly'}),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
+      body: JSON.stringify({ deviceId, plan: 'monthly' }),
     });
     const d = await r.json();
-    if(d.ok) { toast(`✅ ${label}d successfully`); loadAll(); }
-    else toast('❌ Action failed: '+d.error);
+    if (d.ok) { 
+      toast(`✅ ${config.title} successful`); 
+      loadAll(); 
+    } else {
+      toast('❌ Action failed: ' + d.error);
+    }
+  }
+
+  // ── account actions ──
+  async function accountAction(action, deviceId) {
+    if (!isUnlocked) {
+      toast('❌ Please unlock dashboard first');
+      return;
+    }
+    
+    const actionConfigs = {
+      activate: {
+        title: 'Activate Account',
+        message: 'Activate this account? User will regain full access to the app.',
+        type: 'success',
+        confirmText: '✓ Activate Account'
+      },
+      deactivate: {
+        title: 'Deactivate Account',
+        message: '⚠️ Deactivate this account? User will be completely blocked from using the app, regardless of licence status.',
+        type: 'danger',
+        confirmText: '⏸ Deactivate Account'
+      }
+    };
+    
+    const config = actionConfigs[action];
+    const confirmed = await showModal({
+      title: config.title,
+      message: `${config.message}\n\nDevice: ${deviceId.slice(0, 16)}...`,
+      type: config.type,
+      confirmText: config.confirmText
+    });
+    
+    if (!confirmed) return;
+    
+    const r = await fetch(`/api/admin/account/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
+      body: JSON.stringify({ deviceId }),
+    });
+    const d = await r.json();
+    if (d.ok) { 
+      toast(`✅ ${config.title} successful`); 
+      loadAll(); 
+    } else {
+      toast('❌ Action failed: ' + d.error);
+    }
   }
 
   // ── pagination ──
@@ -462,12 +1330,26 @@
   }
 
   async function toggleBilling(enabled) {
-    const secret = ADMIN_SECRET || prompt('Admin secret:');
-    if (!secret) { loadBillingStatus(); return; } // revert
+    const action = enabled ? 'enable' : 'disable';
+    const confirmed = await showModal({
+      type: enabled ? 'warning' : 'danger',
+      title: `${action.charAt(0).toUpperCase() + action.slice(1)} Billing System?`,
+      message: enabled 
+        ? 'This will activate payment requirements for all users. They will need valid licences to access the app.'
+        : 'This will disable billing enforcement. All users will have FREE access regardless of their licence status.',
+      confirmText: `Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      cancelText: 'Cancel'
+    });
+    
+    if (!confirmed) {
+      loadBillingStatus(); // revert toggle UI
+      return;
+    }
+    
     try {
       const r = await fetch('/api/admin/billing-toggle', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
         body: JSON.stringify({ enabled }),
       });
       const d = await r.json();
@@ -482,6 +1364,130 @@
       toast('❌ Network error');
       loadBillingStatus();
     }
+  }
+
+  // ── logs ──
+  let logsAutoRefresh = false;
+  let logsInterval = null;
+  let allLogs = [];
+
+  async function loadLogs() {
+    try {
+      const typeFilter = document.getElementById('log-type-filter')?.value || '';
+      const categoryFilter = document.getElementById('log-category-filter')?.value || '';
+      
+      const params = new URLSearchParams({ limit: '200' });
+      if (typeFilter) params.append('type', typeFilter);
+      if (categoryFilter) params.append('category', categoryFilter);
+      
+      const r = await fetch(`/api/logs?${params}`, {
+        headers: { 'x-admin-secret': ADMIN_SECRET }
+      });
+      
+      if (!r.ok) {
+        throw new Error('Failed to fetch logs');
+      }
+      
+      const data = await r.json();
+      allLogs = data.logs || [];
+      renderLogs(allLogs);
+      
+      const countEl = document.getElementById('logs-count');
+      if (countEl) {
+        countEl.textContent = `Showing ${allLogs.length} of ${data.total} logs`;
+      }
+    } catch (err) {
+      console.error('[loadLogs]', err);
+      const entriesEl = document.getElementById('logs-entries');
+      if (entriesEl) {
+        entriesEl.innerHTML = '<div style="color:#FF5555;text-align:center;padding:20px">❌ Failed to load logs</div>';
+      }
+    }
+  }
+
+  function renderLogs(logs) {
+    const entriesEl = document.getElementById('logs-entries');
+    if (!entriesEl) return;
+    
+    if (logs.length === 0) {
+      entriesEl.innerHTML = '<div style="color:#808080;text-align:center;padding:40px">No logs found</div>';
+      return;
+    }
+    
+    entriesEl.innerHTML = logs.map(log => {
+      const time = new Date(log.timestamp).toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      });
+      
+      const detailsStr = log.details ? JSON.stringify(log.details, null, 2) : '';
+      const hasDetails = detailsStr && detailsStr !== '{}';
+      
+      const typeIcon = {
+        ERROR: '🔴',
+        WARNING: '🟡',
+        SUCCESS: '🟢',
+        INFO: '🔷',
+        REQUEST: '🔵',
+        RESPONSE: '🟣'
+      }[log.type] || '⚪';
+      
+      return `
+        <div class="log-entry log-${log.type}" data-log='${JSON.stringify(log).replace(/'/g, "&apos;")}'>
+          <button class="log-copy-btn" onclick='copyLog(${JSON.stringify(log).replace(/'/g, "&apos;")})'>📋 Copy</button>
+          <span class="log-timestamp">[${time}]</span>
+          <span class="log-type ${log.type}">${typeIcon} ${log.type}</span>
+          <span class="log-category">${log.category}</span>
+          <span class="log-message">${escapeHtml(log.message)}</span>
+          ${hasDetails ? `<div class="log-details">${escapeHtml(detailsStr)}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function filterLogs() {
+    loadLogs(); // Reload with filters
+  }
+
+  function clearLogsDisplay() {
+    const entriesEl = document.getElementById('logs-entries');
+    if (entriesEl) {
+      entriesEl.innerHTML = '<div style="color:#808080;text-align:center;padding:40px">Logs cleared from display</div>';
+    }
+    document.getElementById('logs-count').textContent = 'Display cleared';
+  }
+
+  function copyLog(log) {
+    const text = `[${log.timestamp}] [${log.type}] [${log.category}] ${log.message}${log.details ? '\n' + JSON.stringify(log.details, null, 2) : ''}`;
+    copyToClipboard(text);
+  }
+
+  function exportLogs() {
+    if (allLogs.length === 0) {
+      toast('⚠️ No logs to export');
+      return;
+    }
+    
+    const text = allLogs.map(log => 
+      `[${log.timestamp}] [${log.type}] [${log.category}] ${log.message}${log.details ? '\n' + JSON.stringify(log.details, null, 2) : ''}`
+    ).join('\n\n');
+    
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dukapos-logs-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ Logs exported');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   // ── init ──

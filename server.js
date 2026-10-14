@@ -44,10 +44,84 @@ app.use(express.json());
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.static(path.join(__dirname)));
 
+// ─── Logging Middleware ────────────────────────────────────────────────────────
+const logBuffer = []; // In-memory circular buffer (max 1000 entries)
+const MAX_LOGS = 1000;
+
+function log(type, category, message, details = null) {
+  const entry = {
+    id: Date.now() + Math.random(),
+    timestamp: new Date().toISOString(),
+    type, // 'INFO' | 'SUCCESS' | 'ERROR' | 'WARNING' | 'REQUEST' | 'RESPONSE'
+    category, // 'HTTP' | 'DB' | 'PAYSTACK' | 'AUTH' | 'SYSTEM'
+    message,
+    details,
+  };
+  
+  logBuffer.unshift(entry);
+  if (logBuffer.length > MAX_LOGS) logBuffer.pop();
+  
+  // Also console log with color
+  const colors = {
+    INFO: '\x1b[36m',     // Cyan
+    SUCCESS: '\x1b[32m',  // Green
+    ERROR: '\x1b[31m',    // Red
+    WARNING: '\x1b[33m',  // Yellow
+    REQUEST: '\x1b[35m',  // Magenta
+    RESPONSE: '\x1b[34m', // Blue
+  };
+  const reset = '\x1b[0m';
+  console.log(`${colors[type] || ''}[${type}] [${category}] ${message}${reset}`, details || '');
+}
+
+// HTTP Request/Response logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  const { method, url, body, query } = req;
+  
+  // Skip logging for admin page assets
+  if (url.startsWith('/api') || url === '/health') {
+    log('REQUEST', 'HTTP', `${method} ${url}`, { 
+      query: Object.keys(query).length ? query : undefined,
+      body: method === 'POST' ? body : undefined,
+      ip: req.ip,
+      userAgent: req.get('user-agent')?.substring(0, 50)
+    });
+    
+    // Capture response
+    const originalSend = res.send;
+    res.send = function(data) {
+      const duration = Date.now() - start;
+      const type = res.statusCode >= 400 ? 'ERROR' : res.statusCode >= 200 && res.statusCode < 300 ? 'SUCCESS' : 'RESPONSE';
+      
+      log(type, 'HTTP', `${method} ${url} → ${res.statusCode} (${duration}ms)`, {
+        status: res.statusCode,
+        duration: `${duration}ms`,
+        responseSize: data?.length || 0
+      });
+      
+      return originalSend.call(this, data);
+    };
+  }
+  
+  next();
+});
+
 // ─── Admin auth middleware ─────────────────────────────────────────────────────
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-secret'] || req.query.secret;
-  if (token !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  const endpoint = req.path;
+  
+  if (token !== ADMIN_SECRET) {
+    log('WARNING', 'AUTH', `Unauthorized admin access attempt: ${endpoint}`, {
+      ip: req.ip,
+      endpoint,
+      providedToken: token ? '***' + token.slice(-4) : 'none'
+    });
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  log('SUCCESS', 'AUTH', `Admin authenticated: ${endpoint}`, { endpoint });
   next();
 }
 
@@ -110,6 +184,12 @@ app.post('/api/register', async (req, res) => {
 
     if (!deviceId) return res.status(400).json({ error: 'deviceId is required' });
 
+    // Check if this is a new registration
+    const { rows: existing } = await pool.query(
+      `SELECT device_id FROM installs WHERE device_id = $1`, [deviceId]
+    );
+    const isNewRegistration = existing.length === 0;
+
     await pool.query(`
       INSERT INTO installs (
         device_id, business_name, owner_name, phone, location,
@@ -136,6 +216,20 @@ app.post('/api/register', async (req, res) => {
         deviceName||null, deviceModel||null, osName||null, osVersion||null,
         appVersion||null, buildNumber||null, platform||null, isPhysical??true]);
 
+    if (isNewRegistration) {
+      log('SUCCESS', 'SYSTEM', `New device registered: ${businessName || 'Unknown Business'}`, {
+        deviceId: deviceId.substring(0, 16) + '...',
+        businessName,
+        ownerName,
+        platform,
+        deviceModel
+      });
+    } else {
+      log('INFO', 'SYSTEM', `Device heartbeat: ${businessName || deviceId.substring(0, 16)}`, {
+        deviceId: deviceId.substring(0, 16) + '...'
+      });
+    }
+
     // Return current licence status alongside registration ack
     const { rows } = await pool.query(
       `SELECT status, plan, expires_at, licence_key FROM licences WHERE device_id = $1`,
@@ -145,6 +239,7 @@ app.post('/api/register', async (req, res) => {
 
     res.json({ ok: true, licence });
   } catch (err) {
+    log('ERROR', 'DB', `Registration failed: ${err.message}`, { deviceId: req.body.deviceId });
     console.error('[POST /api/register]', err.message);
     res.status(500).json({ error: 'Registration failed' });
   }
@@ -203,17 +298,17 @@ app.get('/api/licence/:deviceId', async (req, res) => {
 });
 
 // ─── GET /api/account-status/:deviceId ────────────────────────────────────────
-// Mobile app calls this to check if account is suspended
-// Returns device info, business info, and suspension status
+// Mobile app calls this to check if account is deactivated
+// Returns device info, business info, and account status
 app.get('/api/account-status/:deviceId', async (req, res) => {
   try {
     const { deviceId } = req.params;
     console.log(`[account-status] check for device: ${deviceId?.slice(0,16)}…`);
 
-    // Get device and business info
+    // Get device and business info including account_status
     const { rows: deviceRows } = await pool.query(
       `SELECT business_name, owner_name, phone, device_name, device_model, 
-              os_name, platform, last_seen_at
+              os_name, platform, last_seen_at, account_status
        FROM installs WHERE device_id = $1`,
       [deviceId]
     );
@@ -223,6 +318,7 @@ app.get('/api/account-status/:deviceId', async (req, res) => {
     }
 
     const device = deviceRows[0];
+    const accountDeactivated = device.account_status === 'deactivated';
 
     // Check licence status
     const { rows: licenceRows } = await pool.query(
@@ -231,10 +327,12 @@ app.get('/api/account-status/:deviceId', async (req, res) => {
     );
 
     const licence = licenceRows[0];
-    const suspended = licence?.status === 'suspended';
+    const licenceSuspended = licence?.status === 'suspended';
 
     res.json({
-      suspended,
+      suspended: licenceSuspended || accountDeactivated, // Account deactivation also suspends access
+      accountStatus: device.account_status || 'active',
+      accountDeactivated,
       deviceId,
       businessName: device.business_name || 'Unknown Business',
       ownerName: device.owner_name || 'Unknown Owner',
@@ -259,20 +357,35 @@ app.post('/api/payment/initiate', async (req, res) => {
   try {
     const { deviceId, plan, phone } = req.body;
     if (!deviceId || !plan || !phone) {
+      log('WARNING', 'PAYSTACK', 'Payment initiation missing required fields', { deviceId, plan, phone });
       return res.status(400).json({ error: 'deviceId, plan, phone required' });
     }
 
     const planConfig = PLANS[plan];
-    if (!planConfig) return res.status(400).json({ error: 'Invalid plan' });
+    if (!planConfig) {
+      log('WARNING', 'PAYSTACK', `Invalid plan requested: ${plan}`, { deviceId, plan });
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
 
     // Ensure device is registered
     const { rows: devRows } = await pool.query(
       `SELECT device_id FROM installs WHERE device_id=$1`, [deviceId]
     );
-    if (!devRows[0]) return res.status(404).json({ error: 'Device not registered' });
+    if (!devRows[0]) {
+      log('WARNING', 'PAYSTACK', 'Payment attempt for unregistered device', { deviceId });
+      return res.status(404).json({ error: 'Device not registered' });
+    }
 
     const reference   = generateReference(deviceId);
     const amountKobo  = planConfig.amount * 100; // Paystack uses kobo (KES cents)
+
+    log('INFO', 'PAYSTACK', `Payment initiated: ${plan} (KES ${planConfig.amount})`, {
+      deviceId: deviceId.substring(0, 16) + '...',
+      plan,
+      amount: planConfig.amount,
+      phone: phone.substring(0, 6) + '***',
+      reference
+    });
 
     // Store pending payment record
     await pool.query(`
@@ -481,7 +594,8 @@ app.get('/api/users', async (req, res) => {
 
     const { rows } = await pool.query(`
       SELECT i.*, l.status AS licence_status, l.plan AS licence_plan,
-             l.expires_at, l.licence_key, l.activated_at
+             l.expires_at, l.licence_key, l.activated_at,
+             i.account_status
       FROM installs i
       LEFT JOIN licences l ON l.device_id = i.device_id
       WHERE ${where}
@@ -625,6 +739,77 @@ app.post('/api/admin/billing-toggle', adminAuth, async (req, res) => {
   }
 });
 
+// ─── POST /api/admin/account/activate ─────────────────────────────────────────
+app.post('/api/admin/account/activate', adminAuth, async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ error: 'deviceId is required' });
+    }
+    
+    await pool.query(
+      `UPDATE installs SET account_status = 'active' WHERE device_id = $1`,
+      [deviceId]
+    );
+    
+    console.log(`[admin] Account activated for device: ${deviceId?.slice(0,16)}…`);
+    res.json({ ok: true, action: 'account_activated', deviceId, accountStatus: 'active' });
+  } catch (err) {
+    console.error('[POST /api/admin/account/activate]', err.message);
+    res.status(500).json({ error: 'Account activation failed' });
+  }
+});
+
+// ─── POST /api/admin/account/deactivate ───────────────────────────────────────
+app.post('/api/admin/account/deactivate', adminAuth, async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ error: 'deviceId is required' });
+    }
+    
+    await pool.query(
+      `UPDATE installs SET account_status = 'deactivated' WHERE device_id = $1`,
+      [deviceId]
+    );
+    
+    console.log(`[admin] Account deactivated for device: ${deviceId?.slice(0,16)}…`);
+    res.json({ ok: true, action: 'account_deactivated', deviceId, accountStatus: 'deactivated' });
+  } catch (err) {
+    console.error('[POST /api/admin/account/deactivate]', err.message);
+    res.status(500).json({ error: 'Account deactivation failed' });
+  }
+});
+
+// ─── GET /api/logs ────────────────────────────────────────────────────────────
+app.get('/api/logs', adminAuth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '200', 10);
+    const type = req.query.type; // Filter by type if provided
+    const category = req.query.category; // Filter by category if provided
+    
+    let filtered = [...logBuffer];
+    
+    if (type) {
+      filtered = filtered.filter(log => log.type === type);
+    }
+    
+    if (category) {
+      filtered = filtered.filter(log => log.category === category);
+    }
+    
+    res.json({ 
+      total: filtered.length,
+      logs: filtered.slice(0, limit),
+      types: ['INFO', 'SUCCESS', 'ERROR', 'WARNING', 'REQUEST', 'RESPONSE'],
+      categories: ['HTTP', 'DB', 'PAYSTACK', 'AUTH', 'SYSTEM']
+    });
+  } catch (err) {
+    console.error('[GET /api/logs]', err.message);
+    res.status(500).json({ error: 'Failed to fetch logs' });
+  }
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', async (_req, res) => {
   const billingEnabled = await isBillingEnabled();
@@ -637,6 +822,16 @@ app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 async function start() {
   await migrate();
-  app.listen(PORT, () => console.log(`DukaPOS admin running on http://localhost:${PORT}`));
+  app.listen(PORT, () => {
+    log('SUCCESS', 'SYSTEM', `DukaPOS Backend started on port ${PORT}`, {
+      port: PORT,
+      nodeEnv: process.env.NODE_ENV || 'development'
+    });
+    console.log(`DukaPOS admin running on http://localhost:${PORT}`);
+  });
 }
-start().catch((err) => { console.error('Failed to start:', err); process.exit(1); });
+start().catch((err) => { 
+  log('ERROR', 'SYSTEM', `Failed to start server: ${err.message}`);
+  console.error('Failed to start:', err); 
+  process.exit(1); 
+});
